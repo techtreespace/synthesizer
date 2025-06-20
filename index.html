@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIY 아날로그 신디사이저 탐험</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="static/css/custom.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary': {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        'accent': {
+                            50: '#fefce8',
+                            100: '#fef3c7',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-inter bg-gradient-to-br from-slate-50 to-blue-50 text-slate-800 min-h-screen overflow-x-hidden">
+    <!-- Welcome Overlay -->
+    <div id="main-page-overlay" class="fixed inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 text-white flex flex-col items-center justify-center p-8 z-50 transition-all duration-700 ease-out">
+        <div class="max-w-4xl mx-auto text-center space-y-8">
+            <div class="space-y-4">
+                <h2 class="text-2xl md:text-3xl font-light text-accent-100 tracking-wide">Welcome to</h2>
+                <h1 class="text-5xl md:text-7xl font-bold text-white leading-tight tracking-tight">
+                    DIY Analog<br>
+                    <span class="bg-gradient-to-r from-accent-300 to-accent-100 bg-clip-text text-transparent">Synthesizer</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-primary-100 font-light max-w-2xl mx-auto leading-relaxed">
+                    전자음악의 세계로 떠나는 특별한 여행
+                </p>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                        <div class="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mb-4 mx-auto">
+                            <i class="fas fa-lightbulb text-white text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-2">학습</h3>
+                        <p class="text-sm text-primary-100">신디사이저의 원리와 구조를 쉽게 이해</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                        <div class="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mb-4 mx-auto">
+                            <i class="fas fa-play text-white text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-2">체험</h3>
+                        <p class="text-sm text-primary-100">직접 소리를 만들고 연주해보는 실습</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                        <div class="w-12 h-12 bg-accent-500 rounded-lg flex items-center justify-center mb-4 mx-auto">
+                            <i class="fas fa-tools text-white text-xl"></i>
+                        </div>
+                        <h3 class="font-semibold text-lg mb-2">제작</h3>
+                        <p class="text-sm text-primary-100">나만의 신디사이저를 직접 만들어보기</p>
+                    </div>
+                </div>
+                
+                <button id="start-exploration-button" 
+                        class="bg-gradient-to-r from-accent-500 to-accent-600 hover:from-accent-600 hover:to-accent-700 text-white px-12 py-4 rounded-full text-xl font-semibold shadow-2xl hover:shadow-accent-500/25 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1">
+                    <i class="fas fa-rocket mr-3"></i>탐험 시작하기
+                </button>
+            </div>
+            
+            <p class="text-xl sm:text-2xl font-semibold text-center text-white mb-6">재미있게 탐험해 볼까요?</p>
+        </div>
+
+        <button id="start-exploration-button">
+            Let's go !
+        </button>
+    </div>
+
+    <header class="flex-shrink-0 bg-sky-700 text-white p-6 shadow-md sticky top-0 z-50 transition-transform duration-300 ease-in-out">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <div class="flex justify-between items-center w-full sm:w-auto">
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-white text-center sm:text-left mb-0 sm:mb-0 cursor-pointer" onclick="showIntro()">DIY 아날로그 신디사이저 탐험</h1>
+                <button id="mobile-menu-toggle" class="sm:hidden text-white text-2xl focus:outline-none ml-4">
+                    <i class="fas fa-bars text-xl text-slate-600"></i>
+                </button>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex space-x-1">
+                <button class="tab-button active px-3 py-2 rounded-lg font-bold transition-all duration-200 text-sm" onclick="showSection('sound')">
+                    1
+                </button>
+                <button class="tab-button px-3 py-2 rounded-lg font-bold transition-all duration-200 text-sm" onclick="showSection('heart')">
+                    2
+                </button>
+                <button class="tab-button px-3 py-2 rounded-lg font-bold transition-all duration-200 text-sm" onclick="showSection('components')">
+                    3
+                </button>
+                <button class="tab-button px-3 py-2 rounded-lg font-bold transition-all duration-200 text-sm" onclick="showSection('hands-on')">
+                    4
+                </button>
+                <button class="tab-button px-3 py-2 rounded-lg font-bold transition-all duration-200 text-sm" onclick="showSection('diy')">
+                    5
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="flex flex-col min-h-screen">
+    <main class="flex-1 container mx-auto px-6 py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Sound Section -->
+            <section id="sound-section" class="content-section">
+                <div class="mb-8">
+                    <h2 class="section-title bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-4xl font-bold mb-4">1. 소리의 세계</h2>
+                    <p class="section-subtitle">소리의 기본 원리부터 신디사이저가 어떻게 소리를 만드는지 알아보겠습니다.</p>
+                </div>
+
+                <div class="grid gap-8">
+                    <!-- Sound Theory Card -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-wave-square text-primary-500 mr-3"></i>
+                            소리란 무엇인가요?
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph">
+                                소리는 공기 중에서 일어나는 압력의 변화입니다. 
+                                물체가 진동하면 주변 공기 분자들이 압축되고 팽창하면서 파동이 만들어지고, 
+                                이 파동이 우리 귀에 도달하면 소리로 인식됩니다.
+                            </p>
+                            <p class="text-paragraph">
+                                신디사이저는 전자적으로 이런 진동을 만들어서 소리를 생성합니다. 
+                                다양한 파형(사인파, 사각파, 톱니파 등)을 만들어 내어 
+                                각기 다른 음색의 소리를 만들어낼 수 있습니다.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Waveform Visualization -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-line text-primary-500 mr-3"></i>
+                            파형의 종류
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                신디사이저에서 사용하는 기본 파형들을 살펴보세요. 
+                                각 파형은 고유한 음색과 특성을 가지고 있습니다.
+                            </p>
+                            <div class="chart-container">
+                                <canvas id="waveformChart"></canvas>
+                            </div>
+                            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-slate-50 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-primary-700 mb-2">사인파 (Sine Wave)</h4>
+                                    <p class="text-sm text-slate-600">가장 순수한 형태의 파형으로, 부드럽고 둥근 소리</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-primary-700 mb-2">사각파 (Square Wave)</h4>
+                                    <p class="text-sm text-slate-600">날카롭고 디지털적인 소리, 클라리넷과 비슷</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-primary-700 mb-2">톱니파 (Sawtooth Wave)</h4>
+                                    <p class="text-sm text-slate-600">밝고 날카로운 소리, 브라스 악기와 비슷</p>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-lg">
+                                    <h4 class="font-semibold text-primary-700 mb-2">삼각파 (Triangle Wave)</h4>
+                                    <p class="text-sm text-slate-600">사인파와 사각파의 중간 특성을 가진 소리</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hands-on Waveform Demo -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-volume-up text-primary-500 mr-3"></i>
+                            파형 체험하기
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                각 파형 버튼을 길게 눌러서 소리의 차이를 직접 들어보세요.
+                            </p>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <button class="waveform-button" data-waveform="sine" onmousedown="startWaveform('sine')" onmouseup="stopWaveform()" onmouseleave="stopWaveform()" ontouchstart="startWaveform('sine')" ontouchend="stopWaveform()">
+                                    <svg class="w-8 h-8 mb-2" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M0 25Q12.5 5 25 25T50 25Q62.5 5 75 25T100 25" stroke="currentColor" stroke-width="3" fill="none"/>
+                                    </svg>
+                                    <span>사인파</span>
+                                </button>
+                                <button class="waveform-button" data-waveform="square" onmousedown="startWaveform('square')" onmouseup="stopWaveform()" onmouseleave="stopWaveform()" ontouchstart="startWaveform('square')" ontouchend="stopWaveform()">
+                                    <svg class="w-8 h-8 mb-2" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M0 40L0 10L25 10L25 40L50 40L50 10L75 10L75 40L100 40" stroke="currentColor" stroke-width="3" fill="none"/>
+                                    </svg>
+                                    <span>사각파</span>
+                                </button>
+                                <button class="waveform-button" data-waveform="sawtooth" onmousedown="startWaveform('sawtooth')" onmouseup="stopWaveform()" onmouseleave="stopWaveform()" ontouchstart="startWaveform('sawtooth')" ontouchend="stopWaveform()">
+                                    <svg class="w-8 h-8 mb-2" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M0 40L25 10L25 40L50 10L50 40L75 10L75 40L100 10" stroke="currentColor" stroke-width="3" fill="none"/>
+                                    </svg>
+                                    <span>톱니파</span>
+                                </button>
+                                <button class="waveform-button" data-waveform="triangle" onmousedown="startWaveform('triangle')" onmouseup="stopWaveform()" onmouseleave="stopWaveform()" ontouchstart="startWaveform('triangle')" ontouchend="stopWaveform()">
+                                    <svg class="w-8 h-8 mb-2" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M0 40L25 10L50 40L75 10L100 40" stroke="currentColor" stroke-width="3" fill="none"/>
+                                    </svg>
+                                    <span>삼각파</span>
+                                </button>
+                            </div>
+                            <p class="text-center text-sm text-slate-600 mt-4">
+                                ⚠️ 볼륨을 적절히 조절한 후 버튼을 길게 눌러주세요
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Heart Section -->
+            <section id="heart-section" class="content-section hidden">
+                <div class="mb-8">
+                    <h2 class="section-title bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-4xl font-bold mb-4">2. 신디사이저의 기본 구조</h2>
+                    <p class="section-subtitle">신디사이저가 어떻게 구성되어 있는지, 각 부분이 어떤 역할을 하는지 알아보겠습니다.</p>
+                </div>
+
+                <div class="grid gap-8">
+                    <!-- Architecture Overview -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-sitemap text-primary-500 mr-3"></i>
+                            신디사이저의 구조
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph">
+                                아날로그 신디사이저는 크게 세 가지 핵심 부분으로 구성됩니다:
+                            </p>
+                            <div class="mt-6 grid gap-4">
+                                <div class="architecture-block">
+                                    <div class="flex items-center mb-3">
+                                        <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">1</div>
+                                        <h4 class="font-semibold text-lg text-primary-700">오실레이터 (Oscillator)</h4>
+                                    </div>
+                                    <p class="text-sm text-slate-600 ml-11">
+                                        기본 소리를 만드는 부분입니다. 전자적으로 진동을 만들어 다양한 파형의 소리를 생성합니다.
+                                    </p>
+                                </div>
+                                <div class="architecture-block">
+                                    <div class="flex items-center mb-3">
+                                        <div class="w-8 h-8 bg-accent-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">2</div>
+                                        <h4 class="font-semibold text-lg text-accent-700">필터 (Filter)</h4>
+                                    </div>
+                                    <p class="text-sm text-slate-600 ml-11">
+                                        오실레이터에서 만든 소리를 조정합니다. 특정 주파수를 강조하거나 제거하여 음색을 변화시킵니다.
+                                    </p>
+                                </div>
+                                <div class="architecture-block">
+                                    <div class="flex items-center mb-3">
+                                        <div class="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">3</div>
+                                        <h4 class="font-semibold text-lg text-emerald-700">앰프 (Amplifier)</h4>
+                                    </div>
+                                    <p class="text-sm text-slate-600 ml-11">
+                                        소리의 크기와 시간에 따른 변화를 조절합니다. 소리가 어떻게 시작되고 끝나는지를 결정합니다.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Signal Flow -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-arrow-right text-primary-500 mr-3"></i>
+                            신호의 흐름
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                신디사이저에서 소리가 만들어지는 과정을 단계별로 살펴보겠습니다.
+                            </p>
+                            <div class="grid md:grid-cols-3 gap-6">
+                                <div class="signal-block">
+                                    <div class="bg-primary-100 p-6 rounded-lg border-2 border-primary-200">
+                                        <div class="w-12 h-12 bg-primary-500 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                                            <i class="fas fa-wave-square"></i>
+                                        </div>
+                                        <h4 class="font-semibold text-lg text-primary-700 mb-2">1. 오실레이터</h4>
+                                        <p class="text-sm text-slate-600">
+                                            기본 파형 생성<br>
+                                            • 사인파, 사각파, 톱니파<br>
+                                            • 주파수 조절
+                                        </p>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <i class="fas fa-arrow-down text-2xl text-slate-400"></i>
+                                    </div>
+                                </div>
+                                <div class="signal-block">
+                                    <div class="bg-accent-100 p-6 rounded-lg border-2 border-accent-200">
+                                        <div class="w-12 h-12 bg-accent-500 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                                            <i class="fas fa-filter"></i>
+                                        </div>
+                                        <h4 class="font-semibold text-lg text-accent-700 mb-2">2. 필터</h4>
+                                        <p class="text-sm text-slate-600">
+                                            음색 조절<br>
+                                            • 고주파/저주파 제거<br>
+                                            • 특정 주파수 강조
+                                        </p>
+                                    </div>
+                                    <div class="text-center mt-3">
+                                        <i class="fas fa-arrow-down text-2xl text-slate-400"></i>
+                                    </div>
+                                </div>
+                                <div class="signal-block">
+                                    <div class="bg-emerald-100 p-6 rounded-lg border-2 border-emerald-200">
+                                        <div class="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                                            <i class="fas fa-volume-up"></i>
+                                        </div>
+                                        <h4 class="font-semibold text-lg text-emerald-700 mb-2">3. 앰프</h4>
+                                        <p class="text-sm text-slate-600">
+                                            볼륨 및 포락선 조절<br>
+                                            • Attack, Decay, Sustain, Release<br>
+                                            • 최종 출력
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ADSR Envelope -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-chart-area text-primary-500 mr-3"></i>
+                            ADSR 엔벨로프
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                ADSR은 소리가 시간에 따라 어떻게 변화하는지를 조절하는 중요한 요소입니다.
+                            </p>
+                            <div class="chart-container mb-6">
+                                <canvas id="adsrChart"></canvas>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="adsr-phase">
+                                    <h4 class="font-semibold text-primary-700 mb-2">Attack (어택)</h4>
+                                    <p class="text-sm text-slate-600">건반을 누른 순간부터 소리가 최대 크기까지 올라가는 시간</p>
+                                </div>
+                                <div class="adsr-phase">
+                                    <h4 class="font-semibold text-primary-700 mb-2">Decay (디케이)</h4>
+                                    <p class="text-sm text-slate-600">최대 크기에서 지속 레벨까지 떨어지는 시간</p>
+                                </div>
+                                <div class="adsr-phase">
+                                    <h4 class="font-semibold text-primary-700 mb-2">Sustain (서스테인)</h4>
+                                    <p class="text-sm text-slate-600">건반을 누르고 있는 동안 유지되는 소리의 크기</p>
+                                </div>
+                                <div class="adsr-phase">
+                                    <h4 class="font-semibold text-primary-700 mb-2">Release (릴리즈)</h4>
+                                    <p class="text-sm text-slate-600">건반을 뗀 후 소리가 완전히 사라질 때까지의 시간</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Components Section -->
+            <section id="components-section" class="content-section hidden">
+                <div class="mb-8">
+                    <h2 class="section-title bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-4xl font-bold mb-4">3. 핵심 부품들</h2>
+                    <p class="section-subtitle">신디사이저를 구성하는 주요 전자 부품들과 그 역할을 알아보겠습니다.</p>
+                </div>
+
+                <div class="grid gap-8">
+                    <!-- Operational Amplifiers -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-microchip text-primary-500 mr-3"></i>
+                            반도체 부품들
+                        </h3>
+                        <div class="card-content">
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg border border-blue-200">
+                                    <h4 class="font-semibold text-blue-700 mb-4 flex items-center">
+                                        <i class="fas fa-cog mr-2"></i>연산 증폭기 (Op-Amp)
+                                    </h4>
+                                    <p class="text-sm text-slate-600 mb-4">
+                                        신디사이저의 핵심 부품으로, 신호를 증폭하고 다양한 연산을 수행합니다. 
+                                        오실레이터, 필터, 믹서 등 거의 모든 회로에 사용됩니다.
+                                    </p>
+                                    <div class="bg-white p-3 rounded border border-blue-200">
+                                        <p class="font-medium text-blue-700 mb-2">주요 용도:</p>
+                                        <ul class="text-xs text-slate-600 space-y-1">
+                                            <li>• 신호 증폭 및 버퍼링</li>
+                                            <li>• 오실레이터 회로 구성</li>
+                                            <li>• 액티브 필터 제작</li>
+                                            <li>• 믹서 및 콤퍼레이터</li>
+                                        </ul>
+                                    </div>
+                                    <div class="mt-4 text-center">
+                                        <!-- Op-Amp Symbol -->
+                                        <svg class="w-24 h-16 mx-auto" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <!-- Triangle body -->
+                                            <path d="M20 20L20 60L100 40L20 20Z" stroke="#1e40af" stroke-width="2" fill="#dbeafe"/>
+                                            <!-- Input lines -->
+                                            <line x1="0" y1="30" x2="20" y2="30" stroke="#1e40af" stroke-width="2"/>
+                                            <line x1="0" y1="50" x2="20" y2="50" stroke="#1e40af" stroke-width="2"/>
+                                            <!-- Output line -->
+                                            <line x1="100" y1="40" x2="120" y2="40" stroke="#1e40af" stroke-width="2"/>
+                                            <!-- + and - symbols -->
+                                            <text x="10" y="35" font-family="Arial" font-size="12" fill="#1e40af">+</text>
+                                            <text x="12" y="55" font-family="Arial" font-size="14" fill="#1e40af">-</text>
+                                        </svg>
+                                        <p class="text-xs text-center text-slate-600">연산 증폭기 기호</p>
+                                    </div>
+                                </div>
+                                <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg border border-green-200">
+                                    <h4 class="font-semibold text-green-700 mb-4 flex items-center">
+                                        <i class="fas fa-bolt mr-2"></i>트랜지스터 (Transistor)
+                                    </h4>
+                                    <p class="text-sm text-slate-600 mb-4">
+                                        신호를 증폭하거나 스위치 역할을 하는 반도체 소자입니다. 
+                                        아날로그 회로에서 정밀한 신호 처리를 담당합니다.
+                                    </p>
+                                    <div class="bg-white p-3 rounded border border-green-200">
+                                        <p class="font-medium text-green-700 mb-2">주요 종류:</p>
+                                        <ul class="text-xs text-slate-600 space-y-1">
+                                            <li>• BJT (Bipolar Junction Transistor)</li>
+                                            <li>• JFET (Junction Field-Effect Transistor)</li>
+                                            <li>• MOSFET (Metal-Oxide-Semiconductor FET)</li>
+                                        </ul>
+                                    </div>
+                                    <div class="mt-4 text-center">
+                                        <!-- BJT Symbol -->
+                                        <svg class="w-16 h-16 mx-auto" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <!-- Base line (vertical) -->
+                                            <line x1="25" y1="15" x2="25" y2="45" stroke="#059669" stroke-width="3"/>
+                                            <!-- Collector line -->
+                                            <line x1="25" y1="20" x2="45" y2="10" stroke="#059669" stroke-width="2"/>
+                                            <!-- Emitter line -->
+                                            <line x1="25" y1="40" x2="45" y2="50" stroke="#059669" stroke-width="2"/>
+                                            <!-- Base connection -->
+                                            <line x1="10" y1="30" x2="25" y2="30" stroke="#059669" stroke-width="2"/>
+                                            <!-- Arrow on emitter -->
+                                            <polygon points="40,45 45,50 40,52" fill="#059669"/>
+                                            <!-- Connection points -->
+                                            <circle cx="45" cy="10" r="2" fill="#059669"/>
+                                            <circle cx="45" cy="50" r="2" fill="#059669"/>
+                                            <circle cx="10" cy="30" r="2" fill="#059669"/>
+                                        </svg>
+                                        <p class="text-xs text-center text-slate-600">NPN 트랜지스터</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 bg-slate-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-slate-700 mb-3 flex items-center">
+                                    <i class="fas fa-microchip mr-2"></i>IC (Integrated Circuit) 예시
+                                </h4>
+                                <div class="grid md:grid-cols-3 gap-4">
+                                    <div class="text-center">
+                                        <div class="bg-white p-2 rounded border border-slate-200 mb-2">
+                                            <p class="font-medium text-sm">TL072</p>
+                                            <p class="text-xs text-slate-500">듀얼 Op-Amp</p>
+                                        </div>
+                                        <!-- IC Package visualization -->
+                                        <svg class="w-20 h-12 mx-auto" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <!-- IC body -->
+                                            <rect x="10" y="10" width="100" height="60" rx="5" fill="#2d3748" stroke="#4a5568" stroke-width="2"/>
+                                            <!-- Notch -->
+                                            <path d="M50 10 Q60 5 70 10" fill="none" stroke="#4a5568" stroke-width="2"/>
+                                            <!-- Pins -->
+                                            <rect x="5" y="15" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="5" y="25" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="5" y="35" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="5" y="45" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="15" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="25" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="35" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="45" width="10" height="4" fill="#cbd5e1"/>
+                                            <!-- Pin numbers -->
+                                            <text x="15" y="18" font-family="Arial" font-size="6" fill="#2d3748">1</text>
+                                            <text x="15" y="25" font-family="Arial" font-size="6" fill="#2d3748">2</text>
+                                            <text x="15" y="32" font-family="Arial" font-size="6" fill="#2d3748">3</text>
+                                            <text x="15" y="39" font-family="Arial" font-size="6" fill="#2d3748">4</text>
+                                            <text x="102" y="39" font-family="Arial" font-size="6" fill="#2d3748">5</text>
+                                            <text x="102" y="32" font-family="Arial" font-size="6" fill="#2d3748">6</text>
+                                            <text x="102" y="25" font-family="Arial" font-size="6" fill="#2d3748">7</text>
+                                            <text x="102" y="18" font-family="Arial" font-size="6" fill="#2d3748">8</text>
+                                            <!-- Model Number -->
+                                            <text x="60" y="35" font-family="Arial" font-size="8" fill="white" text-anchor="middle">TL072</text>
+                                        </svg>
+                                        <p class="text-xs text-center text-slate-600">DIP-8 패키지<br>노치가 위쪽 방향</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="bg-white p-2 rounded border border-slate-200 mb-2">
+                                            <p class="font-medium text-sm">LM358</p>
+                                            <p class="text-xs text-slate-500">듀얼 Op-Amp</p>
+                                        </div>
+                                        <svg class="w-20 h-12 mx-auto" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="10" y="10" width="100" height="60" rx="5" fill="#2d3748" stroke="#4a5568" stroke-width="2"/>
+                                            <path d="M50 10 Q60 5 70 10" fill="none" stroke="#4a5568" stroke-width="2"/>
+                                            <rect x="5" y="15" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="5" y="25" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="5" y="35" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="5" y="45" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="15" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="25" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="35" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="45" width="10" height="4" fill="#cbd5e1"/>
+                                            <text x="15" y="18" font-family="Arial" font-size="6" fill="#2d3748">1</text>
+                                            <text x="15" y="25" font-family="Arial" font-size="6" fill="#2d3748">2</text>
+                                            <text x="15" y="32" font-family="Arial" font-size="6" fill="#2d3748">3</text>
+                                            <text x="15" y="39" font-family="Arial" font-size="6" fill="#2d3748">4</text>
+                                            <text x="102" y="39" font-family="Arial" font-size="6" fill="#2d3748">5</text>
+                                            <text x="102" y="32" font-family="Arial" font-size="6" fill="#2d3748">6</text>
+                                            <text x="102" y="25" font-family="Arial" font-size="6" fill="#2d3748">7</text>
+                                            <text x="102" y="18" font-family="Arial" font-size="6" fill="#2d3748">8</text>
+                                            <text x="60" y="35" font-family="Arial" font-size="8" fill="white" text-anchor="middle">LM358</text>
+                                        </svg>
+                                        <p class="text-xs text-center text-slate-600">DIP-8 패키지<br>범용 Op-Amp</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="bg-white p-2 rounded border border-slate-200 mb-2">
+                                            <p class="font-medium text-sm">LM386</p>
+                                            <p class="text-xs text-slate-500">오디오 앰프</p>
+                                        </div>
+                                        <svg class="w-20 h-12 mx-auto" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <rect x="10" y="10" width="100" height="60" rx="5" fill="#2d3748" stroke="#4a5568" stroke-width="2"/>
+                                            <path d="M50 10 Q60 5 70 10" fill="none" stroke="#4a5568" stroke-width="2"/>
+                                            <rect x="5" y="15" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="5" y="25" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="5" y="35" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="5" y="45" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="15" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="25" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="35" width="10" height="4" fill="#cbd5e1"/>
+                                            <rect x="105" y="45" width="10" height="4" fill="#cbd5e1"/>
+                                            <text x="15" y="18" font-family="Arial" font-size="6" fill="#2d3748">1</text>
+                                            <text x="15" y="25" font-family="Arial" font-size="6" fill="#2d3748">2</text>
+                                            <text x="15" y="32" font-family="Arial" font-size="6" fill="#2d3748">3</text>
+                                            <text x="15" y="39" font-family="Arial" font-size="6" fill="#2d3748">4</text>
+                                            <text x="102" y="39" font-family="Arial" font-size="6" fill="#2d3748">5</text>
+                                            <text x="102" y="32" font-family="Arial" font-size="6" fill="#2d3748">6</text>
+                                            <text x="102" y="25" font-family="Arial" font-size="6" fill="#2d3748">7</text>
+                                            <text x="102" y="18" font-family="Arial" font-size="6" fill="#2d3748">8</text>
+                                            <!-- Model Number -->
+                                            <text x="60" y="35" font-family="Arial" font-size="8" fill="white" text-anchor="middle">LM386</text>
+                                        </svg>
+                                        <p class="text-xs text-center text-slate-600">DIP-8 패키지<br>노치가 위쪽 방향</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Capacitors and Resistors -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-circle text-primary-500 mr-3"></i>
+                            수동 부품들
+                        </h3>
+                        <div class="card-content">
+                            <div class="grid md:grid-cols-3 gap-6">
+                                <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 p-4 rounded-lg border border-emerald-200">
+                                    <h4 class="font-semibold text-emerald-700 mb-3 flex items-center">
+                                        <i class="fas fa-minus mr-2"></i>저항 (Resistor)
+                                    </h4>
+                                    <p class="text-sm text-slate-600 mb-3">
+                                        전류의 흐름을 제한하고 전압을 분배하는 부품입니다.
+                                    </p>
+                                    <div class="text-center">
+                                        <!-- Resistor Symbol -->
+                                        <svg class="w-16 h-8 mx-auto mb-2" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <line x1="0" y1="20" x2="20" y2="20" stroke="#059669" stroke-width="2"/>
+                                            <rect x="20" y="15" width="40" height="10" fill="none" stroke="#059669" stroke-width="2" rx="2"/>
+                                            <line x1="60" y1="20" x2="80" y2="20" stroke="#059669" stroke-width="2"/>
+                                        </svg>
+                                        <p class="text-xs text-slate-600">저항 기호</p>
+                                    </div>
+                                </div>
+                                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                                    <h4 class="font-semibold text-blue-700 mb-3 flex items-center">
+                                        <i class="fas fa-battery-quarter mr-2"></i>커패시터 (Capacitor)
+                                    </h4>
+                                    <p class="text-sm text-slate-600 mb-3">
+                                        전기를 저장하고 필터링하는 역할을 합니다.
+                                    </p>
+                                    <div class="text-center">
+                                        <!-- Capacitor Symbol -->
+                                        <svg class="w-16 h-8 mx-auto mb-2" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <line x1="0" y1="20" x2="35" y2="20" stroke="#2563eb" stroke-width="2"/>
+                                            <line x1="35" y1="10" x2="35" y2="30" stroke="#2563eb" stroke-width="3"/>
+                                            <line x1="45" y1="10" x2="45" y2="30" stroke="#2563eb" stroke-width="3"/>
+                                            <line x1="45" y1="20" x2="80" y2="20" stroke="#2563eb" stroke-width="2"/>
+                                        </svg>
+                                        <p class="text-xs text-slate-600">커패시터 기호</p>
+                                    </div>
+                                </div>
+                                <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                                    <h4 class="font-semibold text-purple-700 mb-3 flex items-center">
+                                        <i class="fas fa-magnet mr-2"></i>인덕터 (Inductor)
+                                    </h4>
+                                    <p class="text-sm text-slate-600 mb-3">
+                                        자기장을 이용해 전류 변화를 방지합니다.
+                                    </p>
+                                    <div class="text-center">
+                                        <!-- Inductor Symbol -->
+                                        <svg class="w-16 h-8 mx-auto mb-2" viewBox="0 0 80 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <line x1="0" y1="20" x2="20" y2="20" stroke="#7c3aed" stroke-width="2"/>
+                                            <path d="M20 20 Q25 10 30 20 Q35 30 40 20 Q45 10 50 20 Q55 30 60 20" fill="none" stroke="#7c3aed" stroke-width="2"/>
+                                            <line x1="60" y1="20" x2="80" y2="20" stroke="#7c3aed" stroke-width="2"/>
+                                        </svg>
+                                        <p class="text-xs text-slate-600">인덕터 기호</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Component Selection Guide -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-shopping-cart text-primary-500 mr-3"></i>
+                            부품 선택 가이드
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                DIY 신디사이저 프로젝트를 위한 기본 부품 리스트입니다.
+                            </p>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="bg-slate-50">
+                                            <th class="text-left p-3 font-semibold text-slate-700">부품</th>
+                                            <th class="text-left p-3 font-semibold text-slate-700">권장 모델</th>
+                                            <th class="text-left p-3 font-semibold text-slate-700">용도</th>
+                                            <th class="text-left p-3 font-semibold text-slate-700">수량</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200">
+                                        <tr>
+                                            <td class="p-3">Op-Amp</td>
+                                            <td class="p-3">TL072, LM358</td>
+                                            <td class="p-3">오실레이터, 필터, 앰프</td>
+                                            <td class="p-3">5-10개</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3">BJT</td>
+                                            <td class="p-3">BC549, 2N3906</td>
+                                            <td class="p-3">증폭, 스위칭</td>
+                                            <td class="p-3">10-20개</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3">JFET</td>
+                                            <td class="p-3">J113, 2N5457</td>
+                                            <td class="p-3">버퍼, 믹서</td>
+                                            <td class="p-3">5-10개</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3">저항</td>
+                                            <td class="p-3">1/4W 탄소피막</td>
+                                            <td class="p-3">전류 제한, 분압</td>
+                                            <td class="p-3">각종 저항값</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3">커패시터</td>
+                                            <td class="p-3">세라믹, 전해</td>
+                                            <td class="p-3">필터링, 커플링</td>
+                                            <td class="p-3">각종 용량</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="p-3">가변저항</td>
+                                            <td class="p-3">10kΩ, 100kΩ</td>
+                                            <td class="p-3">볼륨, 주파수 조절</td>
+                                            <td class="p-3">5-10개</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Hands-on Section -->
+            <section id="hands-on-section" class="content-section hidden">
+                <div class="mb-8">
+                    <h2 class="section-title bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-4xl font-bold mb-4">4. 직접 체험해보기</h2>
+                    <p class="section-subtitle">간단한 인터랙티브 데모를 통해 신디사이저의 작동 원리를 체험해보세요.</p>
+                </div>
+
+                <div class="grid gap-8">
+                    <!-- Virtual Oscillator -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-sliders-h text-primary-500 mr-3"></i>
+                            가상 오실레이터
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                주파수와 파형을 조절하여 다양한 소리를 만들어보세요.
+                            </p>
+                            <div class="virtual-oscillator bg-gradient-to-br from-slate-50 to-primary-50 p-6 rounded-xl border border-primary-200">
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-700 mb-2">주파수 (Hz)</label>
+                                        <input type="range" id="frequencySlider" min="100" max="1000" value="440" 
+                                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider">
+                                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                            <span>100Hz</span>
+                                            <span id="frequencyValue">440Hz</span>
+                                            <span>1000Hz</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-700 mb-2">파형 선택</label>
+                                        <select id="waveformSelect" class="w-full p-2 border border-slate-300 rounded-lg bg-white">
+                                            <option value="sine">사인파</option>
+                                            <option value="square">사각파</option>
+                                            <option value="sawtooth">톱니파</option>
+                                            <option value="triangle">삼각파</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mt-6 text-center">
+                                    <p class="text-sm text-slate-600 mb-4">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        주파수와 파형을 선택한 후 아래 키보드로 연주해보세요
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Demo -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-filter text-primary-500 mr-3"></i>
+                            필터 효과 체험
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                필터 설정을 조절한 후 키보드로 연주하여 필터 효과를 체험해보세요.
+                            </p>
+                            <div class="filter-demo bg-gradient-to-br from-slate-50 to-primary-50 p-6 rounded-xl border border-primary-200 mb-6">
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-700 mb-2">필터 활성화</label>
+                                        <div class="flex items-center space-x-3">
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" id="filterToggle" class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                                <span class="ml-3 text-sm font-medium text-gray-900">필터 ON/OFF</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-slate-700 mb-2">필터 컷오프 주파수</label>
+                                        <input type="range" id="filterCutoff" min="200" max="2000" value="1000" 
+                                               class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider">
+                                        <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                            <span>200Hz</span>
+                                            <span id="cutoffValue">1000Hz</span>
+                                            <span>2000Hz</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Virtual Keyboard -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-music text-primary-500 mr-3"></i>
+                            가상 키보드
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                피아노 키보드를 사용해 신디사이저 소리를 직접 연주해보세요. 녹음 기능으로 연주를 저장할 수도 있습니다.
+                            </p>
+                            
+                            <div class="virtual-keyboard bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-xl border border-slate-700 mb-6">
+                                <div class="piano-keyboard-container">
+                                    <div class="white-keys-row flex justify-center">
+                                        <!-- White keys -->
+                                        <button class="piano-key white-key" data-note="C4" data-frequency="261.63">C</button>
+                                        <button class="piano-key white-key" data-note="D4" data-frequency="293.66">D</button>
+                                        <button class="piano-key white-key" data-note="E4" data-frequency="329.63">E</button>
+                                        <button class="piano-key white-key" data-note="F4" data-frequency="349.23">F</button>
+                                        <button class="piano-key white-key" data-note="G4" data-frequency="392.00">G</button>
+                                        <button class="piano-key white-key" data-note="A4" data-frequency="440.00">A</button>
+                                        <button class="piano-key white-key" data-note="B4" data-frequency="493.88">B</button>
+                                        <button class="piano-key white-key" data-note="C5" data-frequency="523.25">C</button>
+                                        <button class="piano-key white-key" data-note="D5" data-frequency="587.33">D</button>
+                                        <button class="piano-key white-key" data-note="E5" data-frequency="659.25">E</button>
+                                        <button class="piano-key white-key" data-note="F5" data-frequency="698.46">F</button>
+                                        <button class="piano-key white-key" data-note="G5" data-frequency="783.99">G</button>
+                                    </div>
+                                    <div class="black-keys-row">
+                                        <!-- Black keys with proper positioning -->
+                                        <button class="piano-key black-key" data-note="C#4" data-frequency="277.18" style="left: 32px;">C#</button>
+                                        <button class="piano-key black-key" data-note="D#4" data-frequency="311.13" style="left: 78px;">D#</button>
+                                        <button class="piano-key black-key" data-note="F#4" data-frequency="369.99" style="left: 170px;">F#</button>
+                                        <button class="piano-key black-key" data-note="G#4" data-frequency="415.30" style="left: 216px;">G#</button>
+                                        <button class="piano-key black-key" data-note="A#4" data-frequency="466.16" style="left: 262px;">A#</button>
+                                        <button class="piano-key black-key" data-note="C#5" data-frequency="554.37" style="left: 354px;">C#</button>
+                                        <button class="piano-key black-key" data-note="D#5" data-frequency="622.25" style="left: 400px;">D#</button>
+                                        <button class="piano-key black-key" data-note="F#5" data-frequency="739.99" style="left: 492px;">F#</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6">
+                                    <p class="text-center text-sm text-slate-300">
+                                        건반을 클릭하거나 터치하여 연주하세요
+                                    </p>
+                                    
+                                    <!-- Recording Controls -->
+                                    <div class="recording-controls flex flex-wrap items-center justify-center gap-3 bg-slate-700 p-4 rounded-lg">
+                                        <button id="recordBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2">
+                                            <i class="fas fa-circle" id="recordIcon"></i>
+                                            <span id="recordText">녹음</span>
+                                        </button>
+                                        <button id="playBtn" class="px-4 py-2 bg-gray-400 text-gray-600 rounded-lg font-medium cursor-not-allowed flex items-center gap-2 opacity-50" disabled>
+                                            <i class="fas fa-play"></i>
+                                            <span>재생</span>
+                                        </button>
+                                        <button id="stopBtn" class="px-4 py-2 bg-gray-400 text-gray-600 rounded-lg font-medium cursor-not-allowed flex items-center gap-2 opacity-50" disabled>
+                                            <i class="fas fa-stop"></i>
+                                            <span>정지</span>
+                                        </button>
+                                        <button id="pauseBtn" class="px-4 py-2 bg-gray-400 text-gray-600 rounded-lg font-medium cursor-not-allowed flex items-center gap-2 opacity-50" disabled>
+                                            <i class="fas fa-pause"></i>
+                                            <span>일시정지</span>
+                                        </button>
+                                        <button id="downloadBtn" class="px-4 py-2 bg-gray-400 text-gray-600 rounded-lg font-medium cursor-not-allowed flex items-center gap-2 opacity-50" disabled>
+                                            <i class="fas fa-download"></i>
+                                            <span>다운로드</span>
+                                        </button>
+                                        <button id="shareBtn" class="px-4 py-2 bg-gray-400 text-gray-600 rounded-lg font-medium cursor-not-allowed flex items-center gap-2 opacity-50" disabled>
+                                            <i class="fas fa-share"></i>
+                                            <span>공유</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Recording Status -->
+                                    <div id="recordingStatus" class="hidden mt-4 text-center">
+                                        <div class="bg-red-100 border border-red-300 text-red-800 px-4 py-2 rounded-lg inline-flex items-center gap-2">
+                                            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                                            <span>녹음 중... <span id="recordingTime">00:00</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </section>
+
+            <!-- DIY Section -->
+            <section id="diy-section" class="content-section hidden">
+                <div class="mb-8">
+                    <h2 class="section-title bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent text-4xl font-bold mb-4">5. DIY 프로젝트</h2>
+                    <p class="section-subtitle">실제로 만들어 볼 수 있는 간단한 신디사이저 키트를 소개합니다.</p>
+                </div>
+
+                <div class="grid gap-8">
+                    <!-- Project Overview -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-hammer text-primary-500 mr-3"></i>
+                            초보자용 신디사이저 키트
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph">
+                                이 키트는 전자공학 초보자도 쉽게 만들 수 있도록 설계된 
+                                간단한 아날로그 신디사이저입니다. 
+                                기본적인 오실레이터와 필터, 앰프로 구성되어 있습니다.
+                            </p>
+                            <div class="mt-6 grid md:grid-cols-3 gap-4">
+                                <div class="feature-card">
+                                    <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-3">
+                                        <i class="fas fa-wave-square text-primary-600 text-xl"></i>
+                                    </div>
+                                    <h4 class="font-semibold mb-2">VCO</h4>
+                                    <p class="text-sm text-slate-600">전압 제어 오실레이터로 다양한 파형 생성</p>
+                                </div>
+                                <div class="feature-card">
+                                    <div class="w-12 h-12 bg-accent-100 rounded-lg flex items-center justify-center mb-3">
+                                        <i class="fas fa-filter text-accent-600 text-xl"></i>
+                                    </div>
+                                    <h4 class="font-semibold mb-2">VCF</h4>
+                                    <p class="text-sm text-slate-600">전압 제어 필터로 음색 조절</p>
+                                </div>
+                                <div class="feature-card">
+                                    <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-3">
+                                        <i class="fas fa-volume-up text-emerald-600 text-xl"></i>
+                                    </div>
+                                    <h4 class="font-semibold mb-2">VCA</h4>
+                                    <p class="text-sm text-slate-600">전압 제어 앰프로 볼륨 조절</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Assembly Guide -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-list-ol text-primary-500 mr-3"></i>
+                            조립 가이드 - 01번 모델
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                DIY 아날로그 신디사이저 01번 모델의 상세한 조립 가이드입니다. 
+                                각 단계를 차근차근 따라하시면 성공적으로 완성할 수 있습니다.
+                            </p>
+                            
+                            <!-- Canva Presentation Embed -->
+                            <div class="assembly-guide-container mb-8">
+                                <div class="bg-slate-100 border-2 border-slate-300 rounded-lg p-4">
+                                    <h4 class="font-semibold text-slate-700 mb-4 text-center">
+                                        <i class="fas fa-tools mr-2"></i>상세 조립 가이드 슬라이드
+                                    </h4>
+                                    <div class="relative w-full" style="height: 500px;">
+                                        <iframe 
+                                            src="https://www.canva.com/design/DAGqPNWGerM/JV_-VaOp1ggOGjEbCCatSA/view?embed"
+                                            allowfullscreen="allowfullscreen"
+                                            allow="fullscreen"
+                                            class="w-full h-full rounded-lg border border-slate-300"
+                                            style="border: none;">
+                                        </iframe>
+                                    </div>
+                                    <p class="text-center text-sm text-slate-600 mt-3">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        슬라이드를 클릭하여 전체화면으로 보거나, 좌우 화살표로 단계별로 확인하세요
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-blue-800 mb-2">
+                                        <i class="fas fa-info-circle mr-2"></i>브래드보드 기반
+                                    </h4>
+                                    <p class="text-blue-700 text-sm">
+                                        납땜이 필요 없는 브래드보드를 사용하여 누구나 쉽고 안전하게 조립할 수 있습니다.
+                                    </p>
+                                </div>
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-amber-800 mb-2">
+                                        <i class="fas fa-battery-three-quarters mr-2"></i>전원 사양
+                                    </h4>
+                                    <p class="text-amber-700 text-sm">
+                                        AAA 건전지 3개 (4.5V)를 사용하여 안전하고 휴대성이 좋습니다.
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="assembly-steps space-y-6">
+                                <div class="step-card">
+                                    <div class="flex items-start space-x-4">
+                                        <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
+                                        <div>
+                                            <h4 class="font-semibold text-lg mb-2">부품 확인 및 준비</h4>
+                                            <p class="text-slate-600 mb-3">키트에 포함된 모든 부품이 있는지 확인하고, 부품 리스트와 대조해보세요.</p>
+                                            <div class="bg-slate-50 p-3 rounded text-sm">
+                                                <strong>필요한 도구:</strong> 없음 (모든 부품이 브래드보드에 꽂기만 하면 됩니다)
+                                            </div>
+                                            <div class="mt-3 bg-emerald-50 border border-emerald-200 p-3 rounded text-sm text-emerald-800">
+                                                <i class="fas fa-check-circle mr-2"></i>
+                                                <strong>팁:</strong> 작업 전 손을 씻고 정전기를 방지하세요
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="step-card">
+                                    <div class="flex items-start space-x-4">
+                                        <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
+                                        <div>
+                                            <h4 class="font-semibold text-lg mb-2">브래드보드 설정</h4>
+                                            <p class="text-slate-600 mb-3">브래드보드의 전원 레일(+, -)을 설정하고 접지 연결을 준비합니다.</p>
+                                            <div class="bg-blue-50 border border-blue-200 p-3 rounded text-sm text-blue-800">
+                                                <i class="fas fa-lightbulb mr-2"></i>
+                                                <strong>참고:</strong> 브래드보드의 빨간선은 +전원, 파란선은 접지(GND)로 사용합니다
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="step-card">
+                                    <div class="flex items-start space-x-4">
+                                        <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
+                                        <div>
+                                            <h4 class="font-semibold text-lg mb-2">전원 연결</h4>
+                                            <p class="text-slate-600 mb-3">배터리 팩 또는 전원 어댑터를 브래드보드의 전원 레일에 연결합니다.</p>
+                                            <div class="bg-amber-50 border border-amber-200 p-3 rounded text-sm text-amber-800">
+                                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                                <strong>주의:</strong> AAA 건전지 3개(4.5V)의 극성을 반드시 확인하고 연결하세요
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="step-card">
+                                    <div class="flex items-start space-x-4">
+                                        <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">4</div>
+                                        <div>
+                                            <h4 class="font-semibold text-lg mb-2">IC 배치 및 연결</h4>
+                                            <p class="text-slate-600 mb-3">오실레이터, 필터, 앰프 IC들을 브래드보드에 배치하고 회로도에 따라 연결합니다.</p>
+                                            <div class="bg-rose-50 border border-rose-200 p-3 rounded text-sm text-rose-800">
+                                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                                <strong>중요:</strong> IC의 핀 1번 위치를 정확히 확인하고 방향을 맞춰 삽입하세요
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="step-card">
+                                    <div class="flex items-start space-x-4">
+                                        <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">5</div>
+                                        <div>
+                                            <h4 class="font-semibold text-lg mb-2">최종 테스트</h4>
+                                            <p class="text-slate-600 mb-3">모든 연결이 완료되면 전원을 켜고 스피커를 연결하여 소리가 나오는지 확인합니다.</p>
+                                            <div class="bg-emerald-50 border border-emerald-200 p-3 rounded text-sm text-emerald-800">
+                                                <i class="fas fa-volume-up mr-2"></i>
+                                                <strong>성공:</strong> 가변저항을 돌려서 소리의 변화를 확인할 수 있다면 완성입니다!
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Model 02 Guide -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-list-ol text-primary-500 mr-3"></i>
+                            조립 가이드 - 02번 모델
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                02번 모델은 01번보다 향상된 기능을 제공하는 중급자용 키트입니다.
+                            </p>
+                            
+                            <!-- Canva Presentation Embed -->
+                            <div class="assembly-guide-container mb-8">
+                                <div class="bg-slate-100 border-2 border-slate-300 rounded-lg p-4">
+                                    <h4 class="font-semibold text-slate-700 mb-4 text-center">
+                                        <i class="fas fa-tools mr-2"></i>02번 모델 조립 가이드
+                                    </h4>
+                                    <div class="relative w-full" style="height: 500px;">
+                                        <iframe 
+                                            src="https://www.canva.com/design/DAGqPOi6y_A/L43KfLGnsBJzBCn4pBYc3A/view?embed"
+                                            allowfullscreen="allowfullscreen"
+                                            allow="fullscreen"
+                                            class="w-full h-full rounded-lg border border-slate-300"
+                                            style="border: none;">
+                                        </iframe>
+                                    </div>
+                                    <p class="text-center text-sm text-slate-600 mt-3">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        슬라이드를 클릭하여 전체화면으로 보거나, 좌우 화살표로 단계별로 확인하세요
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="grid md:grid-cols-2 gap-4 mb-6">
+                                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-purple-800 mb-2">
+                                        <i class="fas fa-star mr-2"></i>02번 모델 특징
+                                    </h4>
+                                    <ul class="text-purple-700 text-sm space-y-1">
+                                        <li>• 더 많은 음색 조절 기능</li>
+                                        <li>• 개선된 필터 섹션</li>
+                                        <li>• ADSR 엔벨로프 생성기</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-amber-800 mb-2">
+                                        <i class="fas fa-battery-three-quarters mr-2"></i>전원 사양
+                                    </h4>
+                                    <p class="text-amber-700 text-sm">
+                                        AAA 건전지 3개 (4.5V)를 사용하여 안전하고 휴대성이 좋습니다.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Troubleshooting Guide -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-tools text-primary-500 mr-3"></i>
+                            문제 해결 가이드
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                조립 중 자주 발생하는 문제들과 해결 방법을 정리했습니다.
+                            </p>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="bg-rose-50 border border-rose-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-rose-800 mb-2">
+                                        <i class="fas fa-times-circle mr-2"></i>소리가 나지 않아요
+                                    </h4>
+                                    <ul class="text-sm text-rose-700 space-y-1">
+                                        <li>• 건전지 연결 및 전압 확인 (AAA 3개, 4.5V)</li>
+                                        <li>• IC 방향 및 삽입 상태 확인</li>
+                                        <li>• 브래드보드 연결 점검 (접촉 불량)</li>
+                                        <li>• 점퍼 와이어 연결 상태 확인</li>
+                                        <li>• 스피커 또는 오디오 출력 연결 확인</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-amber-800 mb-2">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i>소리가 왜곡되어요
+                                    </h4>
+                                    <ul class="text-sm text-amber-700 space-y-1">
+                                        <li>• 건전지 전압 확인 (AAA 신품 3개 사용)</li>
+                                        <li>• 브래드보드 연결부 재점검</li>
+                                        <li>• 부품 값 확인 (저항, 커패시터)</li>
+                                        <li>• 전원 레일 연결 상태 확인</li>
+                                        <li>• 출력 부하 임피던스 확인</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Next Steps -->
+                    <div class="content-card">
+                        <h3 class="card-title">
+                            <i class="fas fa-arrow-right text-primary-500 mr-3"></i>
+                            다음 단계
+                        </h3>
+                        <div class="card-content">
+                            <p class="text-paragraph mb-6">
+                                기본 키트를 완성했다면, 다음 단계로 도전해보세요!
+                            </p>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="next-step-card">
+                                    <h4 class="font-semibold text-primary-700 mb-3">
+                                        <i class="fas fa-plus-circle mr-2"></i>기능 확장
+                                    </h4>
+                                    <ul class="space-y-2 text-sm text-slate-600">
+                                        <li>• LFO(저주파 오실레이터) 추가</li>
+                                        <li>• 에코/딜레이 이펙트</li>
+                                        <li>• 미디 인터페이스</li>
+                                        <li>• 시퀀서 기능</li>
+                                    </ul>
+                                </div>
+                                <div class="next-step-card">
+                                    <h4 class="font-semibold text-primary-700 mb-3">
+                                        <i class="fas fa-graduation-cap mr-2"></i>심화 학습
+                                    </h4>
+                                    <ul class="space-y-2 text-sm text-slate-600">
+                                        <li>• 고급 필터 설계</li>
+                                        <li>• 디지털 신호 처리</li>
+                                        <li>• 마이크로컨트롤러 활용</li>
+                                        <li>• 상용 신디사이저 분석</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-white py-8 mt-16">
+        <div class="container mx-auto px-6 text-center">
+            <p class="text-slate-300">
+                © 2025 DIY 아날로그 신디사이저 탐험. 
+                <span class="text-accent-300">전자음악과 함께하는 창의적 여정</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Floating Navigation -->
+    <div class="floating-nav">
+        <button onclick="scrollToTop()" class="floating-nav-button bg-primary-500 hover:bg-primary-600 text-white" title="맨 위로">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        <button id="prevPageBtn" onclick="getPreviousSection()" class="floating-nav-button bg-slate-500 hover:bg-slate-600 text-white" title="이전 페이지">
+            <i class="fas fa-arrow-left"></i>
+        </button>
+        <button id="nextPageBtn" onclick="getNextSection()" class="floating-nav-button bg-slate-500 hover:bg-slate-600 text-white" title="다음 페이지">
+            <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <!-- Mobile Navigation Overlay -->
+    <div id="mobile-nav-overlay" class="mobile-nav-overlay">
+        <div class="close-btn" onclick="closeMobileNav()">&times;</div>
+        <div class="nav-links">
+            <button class="tab-button" onclick="showSection('sound'); closeMobileNav();">1. 소리의 세계</button>
+            <button class="tab-button" onclick="showSection('heart'); closeMobileNav();">2. 신디사이저의 기본 구조</button>
+            <button class="tab-button" onclick="showSection('components'); closeMobileNav();">3. 핵심 부품들</button>
+            <button class="tab-button" onclick="showSection('hands-on'); closeMobileNav();">4. 직접 체험해보기</button>
+            <button class="tab-button" onclick="showSection('diy'); closeMobileNav();">5. DIY 프로젝트</button>
+        </div>
+    </div>
+
+    <script src="static/js/synthesizer.js"></script>
+</body>
+</html>

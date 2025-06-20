@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, send_file
 
 # Create the Flask application
 app = Flask(__name__)
@@ -8,7 +8,7 @@ app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-prod
 @app.route('/')
 def index():
     """Main page route"""
-    return render_template('index.html')
+    return send_file('index.html')
 
 if __name__ == '__main__':
     # Run the application
