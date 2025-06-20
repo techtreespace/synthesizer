@@ -1,0 +1,440 @@
+/* Custom CSS for enhanced styling and readability */
+
+/* Global Typography and Spacing */
+.text-paragraph {
+    @apply text-base leading-relaxed text-slate-700 mb-4;
+    line-height: 1.7;
+}
+
+.section-title {
+    @apply text-3xl md:text-4xl font-bold text-primary-800 mb-3;
+    letter-spacing: -0.025em;
+}
+
+.section-subtitle {
+    @apply text-lg text-slate-600 leading-relaxed;
+    margin-bottom: 2rem;
+}
+
+.card-title {
+    @apply text-xl font-semibold text-slate-800 mb-4 flex items-center;
+}
+
+.card-content {
+    @apply space-y-4;
+}
+
+/* Enhanced Card Styling */
+.content-card {
+    @apply bg-white rounded-xl shadow-lg border border-slate-200 p-8 transition-all duration-300 hover:shadow-xl hover:border-slate-300;
+}
+
+.content-section {
+    @apply py-8;
+}
+
+.content-section.hidden {
+    @apply hidden;
+}
+
+/* Interactive Elements */
+.demo-button {
+    @apply bg-white border-2 border-primary-200 text-primary-700 px-6 py-4 rounded-lg font-semibold transition-all duration-200 hover:bg-primary-50 hover:border-primary-300 hover:shadow-md flex flex-col items-center min-h-[100px] justify-center;
+}
+
+.demo-button:active {
+    @apply scale-95;
+}
+
+.waveform-button {
+    @apply bg-white border-2 border-primary-300 text-primary-700 px-6 py-4 rounded-lg font-semibold transition-all duration-150 hover:bg-primary-50 hover:border-primary-400 hover:shadow-lg flex flex-col items-center min-h-[120px] justify-center cursor-pointer select-none transform hover:scale-105;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.waveform-button:active,
+.waveform-button.playing {
+    @apply bg-primary-100 border-primary-500 scale-95 shadow-inner;
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+}
+
+.waveform-button svg {
+    transition: all 0.2s ease;
+}
+
+.waveform-button:hover svg {
+    transform: scale(1.1);
+}
+
+/* Keyboard Styling */
+.keyboard-key {
+    @apply bg-white border border-slate-300 text-slate-800 px-4 py-6 rounded-lg font-bold text-lg transition-all duration-100 hover:bg-slate-50 hover:shadow-md active:bg-slate-200 active:scale-95 min-w-[60px];
+}
+
+.keyboard-key.black-key {
+    @apply bg-slate-800 text-white border-slate-700 hover:bg-slate-700 active:bg-slate-900;
+}
+
+/* Piano Key Styling */
+.piano-keyboard-container {
+    height: 200px;
+    position: relative;
+}
+
+.white-keys-row {
+    position: relative;
+    z-index: 1;
+}
+
+.black-keys-row {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.piano-key {
+    border: none;
+    outline: none;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.1s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+    pointer-events: auto;
+}
+
+.piano-key.white-key {
+    width: 45px;
+    height: 180px;
+    background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+    border: 2px solid #e2e8f0;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin: 0 1px;
+    padding-bottom: 15px;
+    color: #374151;
+}
+
+.piano-key.white-key:hover {
+    background: linear-gradient(to bottom, #f8f9fa, #e2e8f0);
+    transform: translateY(2px);
+}
+
+.piano-key.white-key:active,
+.piano-key.white-key.active {
+    background: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
+    transform: translateY(4px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.piano-key.black-key {
+    width: 30px;
+    height: 120px;
+    background: linear-gradient(to bottom, #1f2937, #111827);
+    border: 2px solid #374151;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    position: absolute;
+    padding-bottom: 10px;
+    color: #f9fafb;
+    font-size: 0.75rem;
+}
+
+.piano-key.black-key:hover {
+    background: linear-gradient(to bottom, #374151, #1f2937);
+    transform: translateY(2px);
+}
+
+.piano-key.black-key:active,
+.piano-key.black-key.active {
+    background: linear-gradient(to bottom, #4b5563, #374151);
+    transform: translateY(4px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Tab Button Styling */
+.tab-button {
+    @apply transition-all duration-200 ease-in-out;
+}
+
+.tab-button.active {
+    @apply bg-primary-600 text-white shadow-md;
+}
+
+.tab-button:not(.active) {
+    @apply text-primary-700 bg-primary-50 hover:bg-primary-100 hover:text-primary-800;
+}
+
+/* Mobile Navigation */
+.mobile-nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 58, 138, 0.95));
+    backdrop-filter: blur(10px);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-in-out;
+}
+
+.mobile-nav-overlay.open {
+    transform: translateX(0);
+}
+
+.mobile-nav-overlay .close-btn {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    font-size: 2rem;
+    cursor: pointer;
+    color: white;
+    transition: color 0.2s;
+}
+
+.mobile-nav-overlay .close-btn:hover {
+    color: #fbbf24;
+}
+
+.mobile-nav-overlay .nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 400px;
+    padding: 0 2rem;
+}
+
+.mobile-nav-overlay .nav-links .tab-button {
+    @apply text-white text-lg bg-white/10 hover:bg-white/20 rounded-lg py-4 px-6 border border-white/20 backdrop-blur-sm;
+    text-align: left;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+
+/* Chart Container */
+.chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    height: 300px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 1rem;
+}
+
+/* Interactive Demo Styling */
+.interactive-demo {
+    @apply transition-all duration-300 hover:shadow-md;
+}
+
+/* Slider Styling */
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: linear-gradient(to right, #e2e8f0, #cbd5e1);
+    outline: none;
+    border-radius: 6px;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Architecture and Signal Flow */
+.architecture-block {
+    @apply bg-slate-50 p-4 rounded-lg border border-slate-200 transition-all duration-200 hover:bg-slate-100;
+}
+
+.signal-block {
+    @apply text-center;
+}
+
+/* Step Cards */
+.step-card {
+    @apply bg-slate-50 p-6 rounded-lg border border-slate-200;
+}
+
+/* Symbol Cards */
+.symbol-card {
+    @apply text-center p-4 bg-slate-50 rounded-lg border border-slate-200;
+}
+
+/* Feature Cards */
+.feature-card {
+    @apply text-center p-4 bg-slate-50 rounded-lg border border-slate-200 transition-all duration-200 hover:bg-slate-100;
+}
+
+/* ADSR Phase Styling */
+.adsr-phase {
+    @apply bg-slate-50 p-4 rounded-lg border border-slate-200;
+}
+
+/* Next Step Cards */
+.next-step-card {
+    @apply bg-gradient-to-br from-slate-50 to-slate-100 p-6 rounded-lg border border-slate-200;
+}
+
+/* Responsive Design Enhancements */
+@media (max-width: 768px) {
+    .content-card {
+        @apply p-6;
+    }
+    
+    .section-title {
+        @apply text-2xl;
+    }
+    
+    .text-paragraph {
+        @apply text-sm leading-relaxed;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus and Accessibility */
+.tab-button:focus,
+.keyboard-key:focus,
+.demo-button:focus {
+    @apply outline-none ring-2 ring-primary-400 ring-offset-2;
+}
+
+/* Recording Button Animations */
+.recording-indicator {
+    animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+.recording-text {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.5; }
+}
+
+.playback-ready {
+    animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    50% {
+        opacity: 0.9;
+        box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    }
+}
+
+/* Button States */
+.btn-disabled {
+    @apply bg-gray-400 text-gray-600 cursor-not-allowed opacity-50;
+}
+
+.btn-enabled {
+    @apply cursor-pointer opacity-100 transition-all duration-200;
+}
+
+/* Floating Navigation */
+.floating-nav {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.floating-nav-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.floating-nav-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Print Styles */
+@media print {
+    .mobile-nav-overlay,
+    #main-page-overlay,
+    .interactive-demo,
+    .virtual-keyboard {
+        display: none !important;
+    }
+    
+    .content-card {
+        @apply shadow-none border border-slate-300;
+        break-inside: avoid;
+    }
+}

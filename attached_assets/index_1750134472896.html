@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIY 아날로그 신디사이저 탐험</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f0f0; /* Light gray background */
+            /* 모바일 텍스트 크기 조정을 위한 기본 폰트 크기 설정 */
+            @apply text-base sm:text-lg;
+        }
+        .tab-button {
+            @apply px-4 py-2 font-semibold rounded-t-lg transition-colors duration-200 ease-in-out;
+        }
+        .tab-button.active {
+            @apply bg-sky-600 text-white;
+        }
+        .tab-button:not(.active) {
+            @apply text-sky-700 bg-sky-100 hover:bg-sky-200;
+        }
+        .content-section {
+            /* 기존 min-h-[400px] 제거, flex-grow와 overflow-y-auto 추가 */
+            @apply p-6 bg-white rounded-b-lg rounded-tr-lg shadow-lg flex-grow overflow-y-auto flex flex-col;
+        }
+        .interactive-box {
+            @apply border-2 border-dashed border-amber-500 p-4 rounded-lg mt-4 text-center;
+        }
+        .component-card {
+            @apply bg-stone-100 p-4 rounded-lg shadow hover:shadow-md transition-shadow;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 200px;
+            max-height: 250px;
+            background-color: #f0f0f0;
+            border-radius: 0.5rem;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+        /* 추가된 CSS: 텍스트 선택 방지 */
+        .synth-button, #tactSwitchDemo {
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard syntax */
+            touch-action: manipulation; /* 터치 이벤트 최적화: 탭 지연 제거 및 확대/확대 방지 */
+        }
+        /* 건반 버튼 크기 고정 및 내용 중앙 정렬 - 수정됨 */
+        .synth-button {
+            /* 모바일 기본 크기를 2배 키움*/
+            @apply min-w-[8rem] h-32 text-3xl
+                   sm:min-w-[9rem] sm:h-36 sm:text-4xl
+                   md:min-w-[10rem] md:h-40 md:text-5xl
+                   lg:min-w-[12rem] lg:h-48 lg:text-6xl
+                   flex items-center justify-center text-white font-bold;
+            flex-shrink: 0;
+            background-image: linear-gradient(to bottom, #d1d5db, #6b7280);
+        }
+        /* Heart section canvas styling */
+        .heart-canvas-container {
+            height: 100px; /* Fixed height for animation canvases */
+            width: 100%;
+            background-color: #e0f2fe; /* Light blue background for clarity */
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Ensure waves don't overflow */
+        }
+
+        /* Mobile navigation overlay styles */
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); /* Semi-transparent black background */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transform: translateX(100%); /* Start off-screen to the right */
+            transition: transform 0.3s ease-in-out; /* Smooth transition */
+        }
+
+        .mobile-nav-overlay.open {
+            transform: translateX(0); /* Slide in */
+        }
+
+        .mobile-nav-overlay .close-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            font-size: 2rem;
+            cursor: pointer;
+            color: white;
+        }
+
+        .mobile-nav-overlay .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%; /* Take full width */
+            align-items: flex-start; /* Align items to the left */
+            padding-left: 2rem; /* Add left padding */
+        }
+
+        .mobile-nav-overlay .nav-links .tab-button {
+            @apply text-white text-2xl bg-transparent hover:bg-sky-700 rounded-lg py-3 px-6;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* Add subtle separator */
+            text-align: left; /* Ensure text is left-aligned */
+            width: 100%; /* Ensure button takes full width of its container */
+        }
+        .mobile-nav-overlay .nav-links .tab-button:last-child {
+            border-bottom: none;
+        }
+
+        /* Main Page Overlay styles */
+        #main-page-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1e3a8a; /* Dark blue background */
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem; /* Default padding for all screens */
+            text-align: center;
+            z-index: 2000; /* Ensure it's on top of everything */
+            transition: opacity 0.5s ease-in-out;
+            opacity: 1;
+            visibility: visible;
+            /* Added for better mobile spacing */
+            @apply px-4 sm:px-8 md:px-16; /* More responsive horizontal padding */
+        }
+        #main-page-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none; /* Prevent interaction when hidden */
+        }
+        #main-page-overlay h2 { /* Changed to be smaller, for "Welcome to" */
+            @apply text-4xl sm:text-5xl font-extrabold mb-4 leading-tight; /* Increased font size */
+        }
+        #main-page-overlay h1 { /* New style for "DIY Analog Synthesizer" */
+            @apply text-6xl sm:text-7xl md:text-8xl font-extrabold mb-8 leading-tight; /* Increased font size */
+        }
+        #main-page-overlay button {
+            /* Changed to white background, text color matching overlay background */
+            @apply bg-white hover:bg-gray-100 text-[#1e3a8a] text-2xl font-bold py-4 px-10 rounded-full shadow-xl transition-all duration-300 transform hover:scale-105 mt-8 border-2 border-[#1e3a8a];
+        }
+        /* Main page "Let's go!" button border */
+        #main-page-overlay #start-exploration-button {
+            border: 2px solid white; /* White border */
+        }
+        /* Removed Main page image styling */
+        /* Removed Main page graphic element styling */
+        /* New content box styling */
+        #main-page-overlay .content-box {
+            @apply bg-blue-800 p-6 rounded-lg shadow-xl max-w-3xl mx-auto text-white text-center; /* Changed text-left to text-center */
+        }
+        #main-page-overlay .content-box h3 { /* This was for "DIY 아날로그 신디사이저 프로젝트" - can be removed or repurposed */
+            @apply text-2xl sm:text-3xl font-bold mb-4 text-center;
+        }
+        #main-page-overlay .content-box ul { /* This was for the bullet list - will be replaced by spans */
+            @apply space-y-3 text-lg;
+        }
+        #main-page-overlay .content-box li { /* This was for list items - will be replaced by spans */
+            @apply flex items-start;
+        }
+        #main-page-overlay .content-box li span:first-child { /* This was for icon styling - can be removed or repurposed */
+            @apply text-amber-300 mr-3 text-xl sm:text-2xl;
+        }
+        /* 슬라이드 컨테이너 스타일 */
+        .slide-container {
+            position: relative;
+            width: 100%;
+            height: 500px; /* 슬라이드 높이 고정 */
+            overflow: hidden;
+            margin-top: 2rem;
+            border-radius: 0.5rem;
+            background-color: #f0f0f0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            /* flexbox를 사용하여 iframe을 중앙에 정렬하고, 필요한 경우만 스크롤바 표시 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto; /* 내용이 넘칠 경우 스크롤 허용 */
+        }
+
+        /* 각 슬라이드 페이지 스타일 - 이제 사용되지 않음 */
+        /*
+        .slide-page {
+            min-width: 100%;
+            transition: transform 0.5s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            box-sizing: border-box;
+            font-size: 1.1rem;
+            color: #333;
+            background-color: #fff;
+        }
+        .slide-page img {
+            max-width: 90%;
+            max-height: 80%;
+            object-fit: contain;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+        }
+        */
+
+        /* 슬라이드 네비게이션 버튼 및 인디케이터는 이제 사용되지 않음 */
+        /*
+        .slide-nav-button {
+            @apply absolute top-1/2 -translate-y-1/2 px-4 py-2 bg-sky-600 text-white rounded-full shadow-lg hover:bg-sky-700 transition-colors z-10;
+        }
+        .slide-nav-button.left {
+            left: 1rem;
+        }
+        .slide-nav-button.right {
+            right: 1rem;
+        }
+        .slide-indicators {
+            @apply flex justify-center mt-4 space-x-2;
+        }
+        .slide-indicator-dot {
+            @apply w-3 h-3 bg-gray-300 rounded-full cursor-pointer;
+        }
+        .slide-indicator-dot.active {
+            @apply bg-sky-600;
+        }
+        */
+    </style>
+</head>
+<body class="flex flex-col min-h-screen bg-amber-50 text-stone-800 overflow-x-hidden">
+    <div id="main-page-overlay">
+        <h2 class="text-amber-300">Welcome to</h2>
+        <h1 class="text-white">DIY Analog Synthesizer</h1>
+
+        <div class="w-full max-w-md my-8 border-t-2 border-dashed border-white"></div>
+
+        <div class="content-box">
+            <div class="flex flex-wrap justify-center gap-2 mb-4">
+                <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm sm:text-base">#아날로그전자부품</span>
+                <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm sm:text-base">#소리합성변형</span>
+                <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm sm:text-base">#따뜻하고풍부한음색</span>
+                <span class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm sm:text-base">#악기</span>
+            </div>
+            <p class="text-xl sm:text-2xl font-semibold text-center text-white mb-6">재미있게 탐험해 볼까요?</p>
+        </div>
+
+        <button id="start-exploration-button">
+            Let's go !
+        </button>
+    </div>
+
+    <header class="flex-shrink-0 bg-sky-700 text-white p-6 shadow-md sticky top-0 z-50 transition-transform duration-300 ease-in-out">
+        <div class="container mx-auto flex flex-col sm:flex-row justify-between items-center">
+            <div class="flex justify-between items-center w-full sm:w-auto">
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-white text-center sm:text-left mb-0 sm:mb-0">DIY 아날로그 신디사이저 탐험</h1>
+                <button id="mobile-menu-toggle" class="sm:hidden text-white text-2xl focus:outline-none ml-4">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <nav class="hidden sm:flex mt-4 sm:mt-0 space-x-4">
+                <button class="tab-button active" onclick="showSection('sound')">1. 소리의 세계</button>
+                <button class="tab-button" onclick="showSection('heart')">2. 신디사이저의 기본 구조</button>
+                <button class="tab-button" onclick="showSection('hands')">3. 신디사이저 조작 및 음색 조절</button>
+                <button class="tab-button" onclick="showSection('play')">4. 신디사이저 연주 체험</button>
+                <button class="tab-button" onclick="showSection('summary')">5. 핵심 정리와 다음 단계</button>
+            </nav>
+        </div>
+    </header>
+
+    <div id="mobile-nav-overlay" class="mobile-nav-overlay">
+        <button id="close-mobile-menu" class="close-btn">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="nav-links">
+            <button class="tab-button" onclick="showSection('sound')">1. 소리의 세계</button>
+            <button class="tab-button" onclick="showSection('heart')">2. 신디사이저의 기본 구조</l>
+            <button class="tab-button" onclick="showSection('hands')">3. 신디사이저 조작 및 음색 조절</button>
+            <button class="tab-button" onclick="showSection('play')">4. 신디사이저 연주 체험</button>
+            <button class="tab-button" onclick="showSection('summary')">5. 핵심 정리와 다음 단계</button>
+        </div>
+    </div>
+
+    <main class="flex-grow container mx-auto px-4 sm:px-8 lg:px-16 max-w-7xl flex flex-col overflow-hidden">
+        <div id="sound" class="content-section">
+            <h2 class="text-2xl font-bold text-sky-700 mb-4">1. 소리의 세계 🌍</h2>
+            <p class="mb-4">이 섹션에서는 우리 주변의 '소리'가 무엇인지, 어떻게 만들어지고 우리가 어떻게 듣게 되는지 기본적인 원리를 탐험합니다. 신디사이저를 이해하기 위한 첫걸음, 시작해볼까요?</p>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">소리의 발생 원리</h3>
+                    <p>소리는 물체가 <strong class="text-amber-600">진동</strong>해서 만들어지는 에너지의 한 형태예요. 기타 줄을 튕기면 줄이 떨리죠? 이 떨림(진동)이 공기를 흔들어 우리 귀에 닿으면 소리로 인식된답니다. 마치 물 위에 돌을 던졌을 때 물결이 퍼져나가는 것과 비슷해요!</p>
+                </div>
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">소리의 높낮이 (음고)</h3>
+                    <p>소리의 높낮이는 진동이 얼마나 <strong class="text-amber-600">빠르게</strong> 일어나는지에 따라 결정돼요. 진동이 빠르면 높은 소리(고음), 느리면 낮은 소리(저음)가 나죠. 1초에 몇 번 진동하는지를 나타내는 단위를 <strong class="text-amber-600">주파수(Hz)</strong>라고 해요. 주파수가 높을수록 높은 소리가 납니다!</p>
+                </div>
+            </div>
+
+<div class="interactive-box mt-6">
+    <h4 class="text-lg font-semibold mb-2">주파수 조절 체험</h4>
+    
+    <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+        <div class="chart-container mt-4 md:mt-0 w-full md:w-1/2">
+            <canvas id="waveCanvas"></canvas>
+        </div>
+        
+        <div class="w-full md:w-1/2 flex flex-col items-center">
+            <p class="mb-2 text-sm text-center">아래 슬라이더를 움직여 주파수를 조절해보세요.<br> 주파수에 따라 파형이 어떻게 변하고 소리가 어떻게 달라지는지 관찰해봅시다!</p>
+            <input type="range" id="frequencySlider" min="1" max="20" value="5" class="w-full max-w-md mx-auto accent-amber-500">
+            <p class="mt-2">현재 주파수 단계: <span id="frequencyValue" class="font-bold text-sky-600">5</span></p>
+            <p id="pitchDescription" class="mt-2 font-semibold h-6"></p> </div>
+    </div>
+</div>
+        </div>
+
+        <div id="heart" class="content-section hidden">
+            <h2 class="text-2xl font-bold text-sky-700 mb-4">2. 신디사이저의 기본 구조</h2>
+            <p class="mb-4">아날로그 신디사이저는 크게 <strong class="text-amber-600">발진기(오실레이터)</strong>, <strong class="text-amber-600">필터</strong>, <strong class="text-amber-600">앰프</strong> 등으로 구성되어 있어요. 그 중에서도 오실레이터는 다양한 파형의 전기 신호를 만들어내는 핵심 부품입니다.</p>
+            
+            <div class="grid md:grid-cols-3 gap-6 mb-6">
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">오실레이터 (Oscillator)</h3>
+                    <p>사각파, 삼각파, 톱니파 등 다양한 파형의 전기 신호를 만들어내는 역할을 합니다. 신디사이저 소리의 <strong class="text-amber-600">기본적인 음색과 높낮이</strong>를 결정해요.</p>
+                </div>
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">필터 (Filter)</h3>
+                    <p>만들어진 소리의 특정 주파수 영역을 <strong class="text-amber-600">강조하거나 약화</strong>시켜 음색을 바꿔주는 역할을 해요. 탁한 소리를 맑게 하거나, 날카로운 소리를 부드럽게 만들 수 있습니다.</p>
+                </div>
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">앰프 (Amplifier)</h3>
+                    <p>오실레이터와 필터를 거쳐 만들어진 소리 신호는 매우 작아요. 앰프는 이 신호의 <strong class="text-amber-600">크기를 조절</strong>하여 우리가 들을 수 있는 충분한 볼륨으로 키워줍니다.</p>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-bold text-sky-700 mb-4">우리가 만들 신디사이저에 사용되는 부품들</h3>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="col-span-1">
+                    <h4 class="text-lg font-semibold text-emerald-600 mb-2">발진기(오실레이터) 관련 부품</h4>
+                    <div class="space-y-4"> <div class="component-card">
+                            <h3 class="text-xl font-semibold text-emerald-700 mb-2">555 타이머: 발진기 핵심 부품</h3>
+                            <p>우리가 만들 신디사이저의 <strong class="text-amber-600">오실레이터</strong>는 바로 이 555 타이머를 활용하여 구성됩니다. 555 타이머는 규칙적인 <strong class="text-amber-600">전기 신호(펄스)</strong>를 만들어내며, 이 펄스의 빠르기가 소리의 높낮이를 결정하는 핵심적인 역할을 합니다.</p>
+                            <div class="heart-canvas-container mt-2">
+                                <canvas id="timerAnimationCanvas"></canvas>
+                            </div>
+                        </div>
+                        <div class="component-card">
+                            <h3 class="text-xl font-semibold text-emerald-700 mb-2">슈미트 트리거: 파형 다듬기</h3>
+                            <p>555 타이머가 생성한 신호를 더욱 깨끗하고 안정적인 <strong class="text-amber-600">사각파</strong> 형태로 다듬어주는 역할을 합니다. 슈미트 트리거는 특정 전압(임계값)을 기준으로 출력을 확실하게 전환시켜, 명확한 파형을 만들어 <strong class="text-amber-600">오실레이터</strong>의 중요한 부분이 됩니다.</p>
+                            <div class="heart-canvas-container mt-2">
+                                <canvas id="schmittTriggerAnimationCanvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-span-1">
+                    <h4 class="text-lg font-semibold text-emerald-600 mb-2">앰프 관련 부품</h4>
+                    <div class="space-y-4">
+                        <div class="component-card">
+                            <h3 class="text-xl font-semibold text-emerald-700 mb-2">OP-AMP (연산 증폭기): 앰프 역할</h3>
+                            <p>555 타이머와 슈미트 트리거를 통해 만들어진 소리 신호는 아직 매우 작습니다. <strong class="text-amber-600">앰프</strong> 역할을 하는 OP-AMP는 이 작은 신호를 크게 <strong class="text-amber-600">증폭</strong>시켜 우리가 스피커를 통해 들을 수 있도록 해줍니다.</p>
+                            <div id="opampAnimation" class="mt-2 h-16 bg-emerald-100 rounded flex items-center justify-center text-sm text-emerald-700">
+                                신호 증폭 중... (소리가 커집니다!)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="hands" class="content-section hidden">
+            <h2 class="text-2xl font-bold text-sky-700 mb-4">3. 신디사이저 조작 및 음색 조절: 주요 부품들 🖐️🦶</h2>
+            <p class="mb-4">신디사이저를 직접 조작하고 소리를 다양하게 만들기 위해 전기 흐름을 조절하는 '저항', 소리 높낮이를 바꾸는 '가변저항', 소리를 켜고 끄는 '택트 스위치'에 대해 알아볼까요?</p>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">저항: 전기 흐름의 문지기</h3>
+                    <p>저항은 전기 회로에서 전류의 양을 조절하거나 전압을 나누는 역할을 해요. 마치 수도꼭지로 물의 양을 조절하듯, 저항은 전기 에너지의 흐름을 <strong class="text-amber-600">적절하게 제어</strong>합니다. 555 타이머의 작동 속도 조절에도 관여해요.</p>
+                </div>
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">가변저항: 소리 높낮이 마법사</h3>
+                    <p>가변저항은 손잡이를 돌리거나 슬라이드를 움직여 저항값을 바꿀 수 있는 특별한 저항이에요. 신디사이저에서는 이 가변저항을 이용하여 555 타이머에 연결된 저항값을 변화시키고, 결과적으로 <strong class="text-amber-600">소리의 높낮이를 마음대로 조절</strong>할 수 있게 해줍니다. 라디오 볼륨 조절기처럼요!</p>
+                     <div class="interactive-box mt-2">
+                        <label for="potentiometerDemo" class="block text-sm font-medium text-gray-700">가변저항 체험: <span id="potentiometerValue" class="font-bold text-sky-600">50</span>%</label>
+                        <input type="range" id="potentiometerDemo" min="0" max="100" value="50" class="w-full accent-amber-500 mt-1">
+                    </div>
+                    <p class="mt-2">또한, 사각파의 <strong class="text-amber-600">펄스 폭(Duty Cycle)</strong>은 파형이 '켜져 있는' 시간의 비율을 의미하며, 이는 소리의 <strong class="text-amber-600">음색(Timbre)</strong>을 변화시킵니다. 555 타이머와 같은 발진 회로에서는 저항값을 조절하여 이 펄스 폭을 변경할 수 있습니다.</p>
+                     <div class="interactive-box mt-4">
+                        <label for="handsPulseWidthKnob" class="block text-sm font-medium text-gray-700">
+                            펄스 폭 조절 (Duty Cycle): <span id="handsPulseWidthValue" class="font-bold text-sky-600">50</span>%
+                        </label>
+                        <input type="range" id="handsPulseWidthKnob" min="10" max="90" value="50" class="w-full accent-purple-500 mt-1">
+                        <canvas id="handsPulseWidthCanvas" class="mt-2 w-full h-16 rounded bg-amber-100"></canvas>
+                    </div>
+                </div>
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">택트 스위치: 소리 재생 버튼</h3>
+                    <p>택트 스위치는 누르면 회로가 연결되어 소리가 나고, 손을 떼면 회로가 멈추는 <strong class="text-amber-600">버튼</strong>이에요. 전등 스위치처럼 전기의 길을 열었다 닫았다 하며 신디사이저 소리를 제어합니다.</p>
+                    <div class="interactive-box mt-2">
+                        <button id="tactSwitchDemo" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-4 rounded transition-colors">
+                            스위치 누르기!
+                        </button>
+                        <p id="tactSwitchStatus" class="text-sm mt-1">스위치 상태: 꺼짐 (마우스 클릭 또는 스페이스바 키로 조작)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="play" class="content-section hidden">
+            <h2 class="text-2xl font-bold text-sky-700 mb-4">4. 신디사이저 연주 체험: 소리를 직접 만들어보자! 🎹✨</h2>
+            <p class="mb-4">지금까지 배운 내용을 바탕으로 신디사이저를 연주해봅시다! 가변저항으로 음높이를 조절하고, 택트 스위치로 소리를 내보세요.</p>
+            
+            <div class="bg-stone-200 p-4 rounded-lg shadow-inner max-w-2xl mx-auto flex flex-col flex-grow select-none">
+                <h3 class="text-xl font-semibold text-center text-stone-700 mb-4">아날로그 신디사이저 시뮬레이터</h3>
+                
+                <div class="flex flex-col items-center space-y-4 flex-grow">
+                    <div class="grid grid-cols-2 gap-4 mb-4 w-full justify-items-start sm:flex sm:flex-wrap sm:justify-center">
+                        <label class="inline-flex items-center justify-start sm:justify-center">
+                            <input type="radio" name="waveformType" value="sine" class="form-radio text-sky-600 accent-sky-600" checked>
+                            <span class="ml-2 text-sm font-medium text-gray-700">사인파 (Sine)</span>
+                        </label>
+                        <label class="inline-flex items-center justify-start sm:justify-center">
+                            <input type="radio" name="waveformType" value="square" class="form-radio text-sky-600 accent-sky-600">
+                            <span class="ml-2 text-sm font-medium text-gray-700">사각파 (Square)</span>
+                        </label>
+                        <label class="inline-flex items-center justify-start sm:justify-center">
+                            <input type="radio" name="waveformType" value="sawtooth" class="form-radio text-sky-600 accent-sky-600">
+                            <span class="ml-2 text-sm font-medium text-gray-700">톱니파 (Sawtooth)</span>
+                        </label>
+                        <label class="inline-flex items-center justify-start sm:justify-center">
+                            <input type="radio" name="waveformType" value="triangle" class="form-radio text-sky-600 accent-sky-600">
+                            <span class="ml-2 text-sm font-medium text-gray-700">삼각파 (Triangle)</span>
+                        </label>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-4 w-full">
+                        <div class="chart-container w-full md:w-1/2 h-48"> <canvas id="synthOutputCanvas"></canvas>
+                        </div>
+                        
+                        <div class="w-full md:w-1/2 flex flex-col items-center space-y-4">
+                            <div id="pulseWidthControl" class="w-full max-w-xs"> <label for="pulseWidthKnob" class="block text-sm font-medium text-gray-700 mb-1">펄스 폭 조절 (듀티 사이클): <span id="pulseWidthValue" class="font-bold">50</span>%</label>
+                                <input type="range" id="pulseWidthKnob" min="10" max="90" value="50" class="w-full accent-purple-500">
+                            </div>
+
+                            <div class="w-full max-w-xs"> <label for="synthPitchKnob" class="block text-sm font-medium text-gray-700 mb-1">음높이 조절 (가변저항): <span id="synthPitchValue" class="font-bold">50</span></label>
+                                <input type="range" id="synthPitchKnob" min="1" max="100" value="50" class="w-full accent-amber-500">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p id="synthOutputStatus" class="mt-2 text-center font-semibold text-stone-700 h-6"></p>
+
+                    <div class="flex flex-col gap-4 w-full items-center">
+                        <div class="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8">
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="C5">도</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="D5">레</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="E5">미</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="F5">파</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="G5">솔</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="A5">라</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="B5">시</button>
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8">
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="C4">도</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="D4">레</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="E4">미</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="F4">파</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="G4">솔</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="A4">라</button>
+                            <button class="synth-button rounded-lg shadow transition-transform hover:scale-105" data-note-full="B4">시</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="summary" class="content-section hidden">
+            <h2 class="text-2xl font-bold text-sky-700 mb-4">5. 핵심 정리와 다음 단계 💡</h2>
+            <p class="mb-4">오늘 우리는 소리의 신비로운 세계부터 신디사이저의 작동 원리까지 많은 것을 배웠어요. 이 섹션에서는 주요 내용을 다시 한번 정리하고, 앞으로 더 재미있게 전자공학을 탐구할 수 있는 몇 가지 팁을 알려줄게요!</p>
+            
+            <div class="space-y-4">
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">오늘 배운 핵심 내용:</h3>
+                    <ul class="list-disc list-inside space-y-1 text-sm">
+                        <li>소리는 물체의 <strong class="text-amber-600">진동</strong>으로 발생하며, 진동 속도(주파수)에 따라 높낮이가 결정돼요.</li>
+                        <li><strong class="text-amber-600">555 타이머</strong>는 규칙적인 신호를 만들어 소리의 기본 주파수를 생성해요.</li>
+                        <li><strong class="text-amber-600">슈미트 트리거</strong>는 불안정한 신호를 깨끗한 사각파 펄스로 변환하여 소리를 명확하게 만들어줘요.</li>
+                        <li><strong class="text-amber-600">OP-AMP</strong>는 작은 소리 신호를 크게 증폭시켜 우리가 들을 수 있게 해요.</li>
+                        <li><strong class="text-amber-600">저항</strong>은 전류를 제어하고, <strong class="text-amber-600">가변저항</strong>으로 음높이를 조절하며, <strong class="text-amber-600">택트 스위치</strong>로 소리를 켜고 끌 수 있어요.</li>
+                        <li>이 모든 부품들이 모여 신디사이저라는 악기가 된답니다!</li>
+                    </ul>
+                </div>
+                 <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-2">학습 진행 팁 (from 교육과정):</h3>
+                    <ul class="list-disc list-inside space-y-1 text-sm">
+                        <li><strong>시각 자료 활용:</strong> 그림이나 애니메이션을 보면 이해가 더 쉬워요. (이 앱처럼요!)</li>
+                        <li><strong>비유와 실생활 예시:</strong> 어려운 원리도 주변의 물건에 비유하면 재미있게 배울 수 있어요.</li>
+                        <li><strong>질문은 언제나 환영:</strong> 궁금한 점이 있다면 주저하지 말고 질문하세요!</li>
+                        <li><strong>직접 체험하기:</strong> 직접 만져보고 조작해보는 것이 최고의 학습 방법이에요.</li>
+                        <li><strong>안전 제일:</strong> 전자 부품을 다룰 때는 항상 안전 수칙을 지켜주세요.</li>
+                    </ul>
+                </div>
+
+                <!-- 슬라이드 섹션 시작: Canva 슬라이드 임베드 -->
+                <div class="component-card">
+                    <h3 class="text-xl font-semibold text-emerald-700 mb-4">전자회로 구성 학습 슬라이드</h3>
+                    <div class="slide-container">
+                        <!-- Canva 슬라이드를 임베드합니다. Canva embed 파라미터를 추가했습니다. -->
+                        <iframe src="https://www.canva.com/design/DAGqPNWGerM/PETWQ8fUuKBvXzF0B287xw/view?embed"
+                                width="100%"
+                                height="100%"
+                                allowfullscreen
+                                allow="fullscreen"
+                                style="border: none; border-radius: 0.5rem; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                        </iframe>
+                    </div>
+                    <p class="mt-4 text-center text-sm text-gray-600">
+                        위 슬라이드는 Canva에서 제공하는 임베드 기능을 사용하여 표시됩니다.
+                        슬라이드 내에서 제공되는 컨트롤을 사용하여 탐색해주세요.
+                    </p>
+                </div>
+                <!-- 슬라이드 섹션 끝 -->
+
+                <p class="mt-4 text-center font-semibold">여러분의 창의력과 호기심으로 더 멋진 소리와 장치들을 만들어보세요! 🚀</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center p-4 text-sm text-sky-800 mt-8">
+        COPYRIGHT ‌TECHTREESPACE © 2017-2025. ALL RIGHTS RESERVED.
+    </footer>
+
+    <script>
+        const sections = ['sound', 'heart', 'hands', 'play', 'summary'];
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const contentSections = document.querySelectorAll('.content-section');
+        let currentActiveSectionId = 'sound'; // 현재 활성화된 섹션 ID를 추적하는 변수
+
+        // 애니메이션 프레임 ID를 저장하여 중지할 수 있도록 합니다.
+        window.timerAnimationId = null; 
+        window.schmittAnimationId = null; 
+        window.handsAnimationId = null; // Hands 섹션 애니메이션 ID 추가
+
+        // Mobile Navigation Elements
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+        const closeMobileMenu = document.getElementById('close-mobile-menu');
+        const mobileNavLinks = document.querySelector('#mobile-nav-overlay .nav-links');
+
+        function openMobileNav() {
+            mobileNavOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling background
+        }
+
+        function closeMobileNav() {
+            mobileNavOverlay.classList.remove('open');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+        // Event Listeners for Mobile Menu
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', openMobileNav);
+        }
+        if (closeMobileMenu) {
+            closeMobileMenu.addEventListener('click', closeMobileNav); 
+        }
+        // Close mobile nav when a link is clicked
+        if (mobileNavLinks) {
+            mobileNavLinks.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', closeMobileNav); 
+            });
+        }
+
+
+        function showSection(sectionId) {
+            // 모든 섹션 숨기기
+            contentSections.forEach(section => {
+                section.classList.add('hidden');
+            });
+            // 선택된 섹션 보이기
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            // 탭 버튼 활성화 상태 업데이트 (데스크톱 메뉴)
+            document.querySelector('header nav').querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+                if (button.getAttribute('onclick').includes(sectionId)) {
+                    button.classList.add('active');
+                }
+            });
+
+            // 탭 버튼 활성화 상태 업데이트 (모바일 오버레이 메뉴)
+            document.querySelector('#mobile-nav-overlay .nav-links').querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+                if (button.getAttribute('onclick').includes(sectionId)) {
+                    button.classList.add('active');
+                }
+            });
+
+            currentActiveSectionId = sectionId; // 현재 활성화된 섹션 업데이트
+            window.scrollTo(0, 0); // 스크롤 맨 위로
+
+            // 섹션에 따라 캔버스 초기화 또는 애니메이션 시작/중지
+            if (sectionId === 'sound') {
+                setupWaveCanvas();
+                // 'sound' 섹션 진입 시 파형을 사인파로 설정하고 라디오 버튼도 업데이트
+                selectedWaveformType = 'sine';
+                const sineRadio = document.querySelector('input[name="waveformType"][value="sine"]');
+                if (sineRadio) {
+                    sineRadio.checked = true;
+                }
+                // 사인파가 아니면 펄스 폭 조절 슬라이더를 숨길 필요는 없음 (play 섹션에서 관리)
+                // 그러나 sound 섹션에서는 play 섹션의 UI를 건드리지 않음.
+                stopHandsAnimations();
+                stopHeartAnimations();
+
+            } else if (sectionId === 'play') {
+                setupSynthCanvas();
+                // 'play' 섹션으로 이동 시, 파형 타입을 UI의 기본 선택(sine)으로 맞춤
+                const defaultWaveformRadio = document.querySelector('input[name="waveformType"][value="sine"]');
+                if (defaultWaveformRadio) {
+                    defaultWaveformRadio.checked = true; // UI에서 사인파를 기본으로 선택
+                }
+                selectedWaveformType = 'sine'; // 실제 오디오 파형 타입도 사인으로 설정
+                console.log("Entered 'play' section, selectedWaveformType set to 'sine'");
+
+                // 현재 선택된 파형(이제 'sine'이어야 함)에 따라 펄스 폭 조절 UI 표시/숨김
+                const pulseWidthControlUI = document.getElementById('pulseWidthControl'); // 변수명 명확화
+                if (selectedWaveformType === 'square') { // 이 조건은 sine으로 설정했으므로 false
+                    pulseWidthControlUI.classList.remove('hidden');
+                } else {
+                    pulseWidthControlUI.classList.add('hidden');
+                }
+                stopHandsAnimations(); 
+                stopHeartAnimations(); 
+
+            } else if (sectionId === 'hands') {
+                setupHandsCanvases(); // Added to ensure hands canvas is set up when section is shown
+                startHandsAnimations(); 
+                stopHeartAnimations(); 
+
+            } else if (sectionId === 'heart') {
+                startHeartAnimations();
+                stopHandsAnimations(); 
+
+            } else if (sectionId === 'summary') { 
+                // summary 섹션 진입 시, 더 이상 custom slide setup을 호출할 필요가 없습니다.
+                // Canva iframe이 이미 HTML에 있으므로 단순히 섹션을 표시하기만 하면 됩니다.
+                stopHandsAnimations();
+                stopHeartAnimations();
+            } else { // For other sections, stop all animations
+                stopHandsAnimations();
+                stopHeartAnimations();
+            }
+        }
+
+        const startExplorationButton = document.getElementById('start-exploration-button');
+        const mainPageOverlay = document.getElementById('main-page-overlay');
+
+        if (startExplorationButton) {
+            startExplorationButton.addEventListener('click', () => {
+                mainPageOverlay.classList.add('hidden');
+                // Ensure audio context is initialized when user interacts for the first time
+                initAudio(); 
+            });
+        }
+
+        let audioContext = null; // Initialize to null
+        let oscillator = null; // Changed to null for persistent management
+        let gainNode = null; // Changed to null for persistent management
+        let currentPlayingBaseFreq = 0; // 섹션 4에서 현재 재생 중인 음의 기본 주파수를 저장
+
+        // initAudio 함수를 비동기 함수로 변경
+        async function initAudio() {
+            console.log('initAudio called. Current AudioContext state:', audioContext ? audioContext.state : 'null');
+            if (!audioContext) { // Only create context if it doesn't exist
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                gainNode = audioContext.createGain();
+                gainNode.connect(audioContext.destination);
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                console.log('AudioContext created. Initial state:', audioContext.state);
+            }
+
+            // Attempt to resume if suspended or interrupted
+            if (audioContext.state === 'suspended' || audioContext.state === 'interrupted') {
+                console.log('Attempting to resume AudioContext from state:', audioContext.state);
+                try {
+                    await audioContext.resume();
+                    console.log('AudioContext resumed successfully. New state:', audioContext.state);
+                    // Play a very short, silent tone to keep AudioContext active on mobile
+                    if (audioContext.state === 'running') {
+                        const silentOscillator = audioContext.createOscillator();
+                        const silentGain = audioContext.createGain();
+                        silentOscillator.connect(silentGain);
+                        silentGain.connect(audioContext.destination);
+                        silentGain.gain.setValueAtTime(0.00001, audioContext.currentTime); // Very low volume
+                        silentOscillator.start(audioContext.currentTime);
+                        silentOscillator.stop(audioContext.currentTime + 0.001); // Very short duration
+                        console.log('Played silent tone to keep AudioContext active.');
+                    }
+                } catch (e) {
+                    console.error('Failed to resume AudioContext:', e);
+                }
+            } else if (audioContext.state === 'running') {
+                console.log('AudioContext state is already active:', audioContext.state);
+            }
+            console.log('initAudio finished. Final AudioContext state:', audioContext.state);
+        }
+
+        // 선택된 파형 타입을 저장하는 전역 변수
+        let selectedWaveformType = 'sine'; // 기본값은 사인파
+
+        // Helper function to create a PeriodicWave for a square wave with variable duty cycle
+        function createSquarePeriodicWave(audioContext, dutyCycle) {
+            const numHarmonics = 2048; // Number of harmonics
+            const real = new Float32Array(numHarmonics + 1);
+            const imag = new Float32Array(numHarmonics + 1);
+
+            real[0] = 0; // DC component
+            imag[0] = 0;
+
+            for (let k = 1; k <= numHarmonics; k++) {
+                const nPiD = k * Math.PI * dutyCycle;
+                real[k] = (2 / (k * Math.PI)) * Math.sin(nPiD);
+                imag[k] = (2 / (k * Math.PI)) * (1 - Math.cos(nPiD));
+            }
+            return audioContext.createPeriodicWave(real, imag, { disableNormalization: true });
+        }
+
+        // playTone 함수 (수정됨)
+        async function playTone(frequency, dutyCycle = 0.5) {
+            console.log(`playTone: freq=${frequency}, waveform=${selectedWaveformType}, dutyCycle=${dutyCycle}, currentOscillatorType=${oscillator ? oscillator.type : 'null'}`);
+            await initAudio();
+
+            if (!audioContext || audioContext.state !== 'running') {
+                console.warn('AudioContext is not running. Cannot play tone.');
+                return;
+            }
+
+            let recreateOscillator = false;
+            if (!oscillator) {
+                recreateOscillator = true;
+            } else {
+                // 요청된 파형과 현재 오실레이터의 상태를 비교하여 재생성 여부 결정
+                if (selectedWaveformType === 'square') {
+                    // square(PeriodicWave)를 사용하려는데, 현재 오실레이터가 custom 타입이 아니면 재생성
+                    if (oscillator.type !== 'custom') {
+                        recreateOscillator = true;
+                        console.log('Recreating oscillator: current type is not custom, but square (PeriodicWave) is requested.');
+                    }
+                    // 이미 custom 타입이면 (즉, PeriodicWave 사용 중), dutyCycle 변경을 위해 재생성할 필요는 없음. setPeriodicWave만 호출.
+                } else { // sine, sawtooth, triangle
+                    // 표준 파형을 사용하려는데, 현재 오실레이터 타입과 다르면 재생성
+                    if (oscillator.type !== selectedWaveformType) {
+                        recreateOscillator = true;
+                        console.log(`Recreating oscillator: current type is ${oscillator.type}, but ${selectedWaveformType} is requested.`);
+                    }
+                }
+            }
+
+            if (recreateOscillator) {
+                if (oscillator) {
+                    try {
+                        oscillator.stop();
+                        oscillator.disconnect();
+                    } catch (e) {
+                        console.warn("Error stopping/disconnecting old oscillator during recreation:", e);
+                    }
+                }
+                oscillator = audioContext.createOscillator();
+                oscillator.connect(gainNode);
+                oscillator.start();
+                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); // 볼륨 설정
+                console.log('Oscillator (re)created and started.');
+            }
+
+
+            // 파형 설정
+            if (selectedWaveformType === 'square') {
+                console.log(`Applying PeriodicWave with dutyCycle: ${dutyCycle} to oscillator (current type: ${oscillator.type})`);
+                const periodicWave = createSquarePeriodicWave(audioContext, dutyCycle);
+                oscillator.setPeriodicWave(periodicWave); // oscillator.type becomes 'custom'
+            } else { // sine, sawtooth, triangle
+                 if (oscillator.type !== selectedWaveformType) { // 재생성되지 않았지만 타입이 다른 경우 (이론상 위에서 걸러짐)
+                    oscillator.type = selectedWaveformType;
+                    console.log(`Oscillator type explicitly set to: ${selectedWaveformType}`);
+                 }
+            }
+
+            if (isFinite(frequency)) {
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            } else {
+                console.error("Invalid frequency value:", frequency);
+                stopTone(); // stopTone이 oscillator를 null로 만듦.
+                return;
+            }
+            
+            // 볼륨이 0으로 떨어졌을 수 있으므로, 재생 시 다시 설정 (특히 stopTone 후 다시 playTone될 때)
+            if (gainNode.gain.value === 0) { // gainNode.gain.value는 최신 크롬에서 지원. 구형 브라우저는 다른 방법 필요할 수 있음.
+                 gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+            } else { // 부드럽게 올리기
+                 gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.01);
+            }
+
+
+            console.log(`Playing tone. Oscillator actual type: ${oscillator.type}, Requested type: ${selectedWaveformType}, Freq: ${frequency.toFixed(2)} Hz, Duty: ${dutyCycle}`);
+        }
+
+
+        function stopTone() {
+            console.log('stopTone called.');
+            if (oscillator) {
+                try {
+                    if (gainNode && audioContext && audioContext.state === 'running') {
+                        gainNode.gain.setValueAtTime(gainNode.gain.value, audioContext.currentTime); // 현재 게인 값에서 시작
+                        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.015); // 더 짧게
+                        
+                        // 이미 실행 중인 stop() 타이머가 있다면 취소 (복잡해지므로 여기선 생략, oscillator null 처리로 대응)
+                        const tempOscillator = oscillator; // 임시 변수에 저장
+                        oscillator = null; // 다른 곳에서 중복 호출 방지
+
+                        // stop은 한 번만 호출되어야 함
+                        setTimeout(() => { // ramp가 완료될 시간을 주고 stop
+                           try {
+                               tempOscillator.stop();
+                               tempOscillator.disconnect();
+                               console.log('Oscillator stopped and disconnected after ramp.');
+                           } catch(e) {console.warn("Error in scheduled stop/disconnect:", e)}
+                        }, 20); // ramp 시간보다 약간 길게
+
+                    } else { // 오디오 컨텍스트가 없거나 실행 중이지 않은 경우
+                        const tempOscillator = oscillator;
+                        oscillator = null;
+                        tempOscillator.stop();
+                        tempOscillator.disconnect();
+                        console.log('Oscillator stopped and disconnected (no ramp).');
+                    }
+                } catch (e) {
+                    console.warn('Error stopping oscillator:', e);
+                    if (oscillator) { // 만약 위에서 null 처리가 안되었다면 여기서라도
+                       try { oscillator.disconnect(); } catch (ex) {}
+                       oscillator = null; // 확실히 null로 만듦
+                    }
+                }
+            } else {
+                console.log('stopTone called, but oscillator is already null.');
+            }
+        }
+
+        const frequencySlider = document.getElementById('frequencySlider');
+        const frequencyValue = document.getElementById('frequencyValue');
+        const pitchDescription = document.getElementById('pitchDescription');
+        let waveCanvas; 
+        let waveCtx;    
+
+        function drawWave(frequency) {
+            // 캔버스 컨텍스트가 준비되지 않았다면 함수 종료
+            if (!waveCtx || !waveCanvas) return; 
+
+            const width = waveCanvas.width;
+            const height = waveCanvas.height;
+            const amplitude = height / 3;
+            const centerY = height / 2;
+            
+            waveCtx.clearRect(0, 0, width, height); // 캔버스 지우기
+            waveCtx.beginPath(); // 새로운 경로 시작
+            waveCtx.moveTo(0, centerY); // 시작점 설정
+
+            // 사인파 그리기
+            for (let x = 0; x < width; x++) {
+                const y = centerY + amplitude * Math.sin((x * frequency * Math.PI * 2) / (width * 5));
+                waveCtx.lineTo(x, y);
+            }
+            waveCtx.strokeStyle = 'rgb(59, 130, 246)'; // 파란색 선
+            waveCtx.lineWidth = 2; // 선 두께
+            waveCtx.stroke(); // 선 그리기
+        }
+        
+        function setupWaveCanvas() {
+            waveCanvas = document.getElementById('waveCanvas'); 
+            if (waveCanvas) { 
+                waveCtx = waveCanvas.getContext('2d'); 
+                const container = waveCanvas.parentElement;
+                waveCanvas.width = container.clientWidth;
+                waveCanvas.height = container.clientHeight;
+                drawWave(parseInt(frequencySlider.value)); // 초기 파형 그리기
+            }
+        }
+
+        frequencySlider.addEventListener('input', async (event) => { 
+            const freq = parseInt(event.target.value);
+            frequencyValue.textContent = freq;
+            drawWave(freq); 
+            if (freq < 7) pitchDescription.textContent = "낮은 음 (저주파)";
+            else if (freq < 14) pitchDescription.textContent = "중간 음";
+            else if (freq >= 14) pitchDescription.textContent = "높은 음 (고주파)";
+
+            const audioFreq = 100 + (freq - 1) * 50;
+            // 섹션 1에서는 항상 사인파로 소리내기 위해 임시로 selectedWaveformType 변경
+            const originalSelectedWaveformTypeForSoundPage = selectedWaveformType;
+            selectedWaveformType = 'sine';
+            await playTone(audioFreq, 0.5); 
+            selectedWaveformType = originalSelectedWaveformTypeForSoundPage; // 원래대로 복구
+        });
+
+        frequencySlider.addEventListener('mouseup', stopTone);
+        frequencySlider.addEventListener('touchend', stopTone);
+        frequencySlider.addEventListener('mouseleave', stopTone);
+        
+        let timerAnimationCanvas, timerAnimationCtx;
+        let schmittTriggerAnimationCanvas, schmittTriggerAnimationCtx; 
+        let animationTime = 0;
+
+        function drawHeartWaveform(ctx, canvas, type, time) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const amplitude = height / 3;
+            const centerY = height / 2;
+            const flowSpeed = 0.5; 
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+
+            for (let x = 0; x < width; x++) {
+                let y;
+                const angle = ((x / width) * Math.PI * 4) + (time * flowSpeed); 
+
+                if (type === 'pulse') {
+                    y = centerY + amplitude * (Math.sin(angle) > 0.8 ? 1 : -1); 
+                } else if (type === 'square') {
+                    y = centerY + amplitude * (Math.sin(angle) > 0 ? 1 : -1);
+                }
+                ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = 'rgb(59, 130, 246)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function animateHeartWaves() {
+            animationTime += 0.1; 
+            if (timerAnimationCtx && timerAnimationCanvas) {
+                drawHeartWaveform(timerAnimationCtx, timerAnimationCanvas, 'pulse', animationTime);
+            }
+            if (schmittTriggerAnimationCtx && schmittTriggerAnimationCanvas) {
+                drawHeartWaveform(schmittTriggerAnimationCtx, schmittTriggerAnimationCanvas, 'square', animationTime);
+            }
+            window.timerAnimationId = requestAnimationFrame(animateHeartWaves);
+        }
+
+        function setupHeartCanvases() {
+            timerAnimationCanvas = document.getElementById('timerAnimationCanvas');
+            schmittTriggerAnimationCanvas = document.getElementById('schmittTriggerAnimationCanvas');
+
+            if (timerAnimationCanvas) {
+                timerAnimationCtx = timerAnimationCanvas.getContext('2d');
+                timerAnimationCanvas.width = timerAnimationCanvas.parentElement.clientWidth;
+                timerAnimationCanvas.height = timerAnimationCanvas.parentElement.clientHeight;
+            }
+            if (schmittTriggerAnimationCanvas) {
+                schmittTriggerAnimationCtx = schmittTriggerAnimationCanvas.getContext('2d');
+                schmittTriggerAnimationCanvas.width = schmittTriggerAnimationCanvas.parentElement.clientWidth;
+                schmittTriggerAnimationCanvas.height = schmittTriggerAnimationCanvas.parentElement.clientHeight;
+            }
+        }
+
+        function startHeartAnimations() {
+            setupHeartCanvases(); 
+            if (window.timerAnimationId === null) { 
+                animationTime = 0; 
+                animateHeartWaves();
+            }
+            const opampAnimation = document.getElementById('opampAnimation');
+            if (opampAnimation && !opampAnimation.animationInterval) { // 중복 실행 방지
+                let lm386SignalSize = 10;
+                opampAnimation.animationInterval = setInterval(() => {
+                    lm386SignalSize = lm386SignalSize === 10 ? 20 : 10;
+                    opampAnimation.innerHTML = `신호 증폭 중... <span style="font-size:${lm386SignalSize}px">🔊</span>`;
+                }, 750);
+            }
+        }
+
+        function stopHeartAnimations() {
+            if (window.timerAnimationId) { 
+                cancelAnimationFrame(window.timerAnimationId); 
+                window.timerAnimationId = null; 
+            }
+            const opampAnimation = document.getElementById('opampAnimation');
+            if (opampAnimation && opampAnimation.animationInterval) {
+                clearInterval(opampAnimation.animationInterval);
+                opampAnimation.innerHTML = `신호 증폭 중... (볼륨 업!)`; 
+                opampAnimation.animationInterval = null;
+            }
+        }
+
+        window.addEventListener('load', async () => { 
+            setupWaveCanvas();
+            setupSynthCanvas();
+            setupHandsCanvases(); // Added to ensure hands canvas is set up on load
+            // setupSlides(); // 슬라이드 초기화 호출은 이제 필요 없습니다 (Canva iframe 직접 임베드).
+            showSection('sound'); 
+
+            const mainPageOverlay = document.getElementById('main-page-overlay');
+            if (mainPageOverlay) {
+                mainPageOverlay.classList.remove('hidden');
+            }
+        });
+
+
+        const potentiometerDemo = document.getElementById('potentiometerDemo');
+        const potentiometerValue = document.getElementById('potentiometerValue');
+        potentiometerDemo.addEventListener('input', async (event) => { 
+            potentiometerValue.textContent = event.target.value;
+            if (isTactOn && currentActiveSectionId === 'hands') { 
+                const val = parseInt(event.target.value);
+                const audioFreq = 200 + (val / 100) * 1000; 
+                // Fix: Ensure selectedWaveformType is set to 'square' for this section
+                const originalSelectedWaveformType = selectedWaveformType; // Save original
+                selectedWaveformType = 'square'; // Force square for this section
+                if (oscillator) { 
+                    if (isFinite(audioFreq)) {
+                        // Use the handsCurrentPulseWidth for the duty cycle
+                        await playTone(audioFreq, handsCurrentPulseWidth / 100); 
+                    } else {
+                        console.error("Invalid audioFreq value from potentiometer:", audioFreq);
+                        stopTone();
+                    }
+                }
+                selectedWaveformType = originalSelectedWaveformType; // Restore original
+            }
+        });
+
+
+        const tactSwitchDemo = document.getElementById('tactSwitchDemo');
+        const tactSwitchStatus = document.getElementById('tactSwitchStatus');
+        let isTactOn = false; 
+        
+        async function handleTactSwitch(on) { 
+            console.log('handleTactSwitch called. on:', on, 'isTactOn:', isTactOn, 'currentActiveSectionId:', currentActiveSectionId); 
+            if (on && !isTactOn && currentActiveSectionId === 'hands') { 
+                isTactOn = true;
+                tactSwitchStatus.textContent = '스위치 상태: 켜짐 (소리 재생!)';
+                tactSwitchDemo.classList.add('bg-red-500', 'hover:bg-red-600');
+                tactSwitchDemo.classList.remove('bg-sky-500', 'hover:bg-sky-600');
+                
+                const potVal = parseInt(potentiometerDemo.value);
+                const audioFreq = 200 + (potVal / 100) * 1000;
+                // Fix: Ensure selectedWaveformType is set to 'square' for this section
+                const originalSelectedWaveformType = selectedWaveformType; // Save original
+                selectedWaveformType = 'square'; // Force square for this section
+                // Use the handsCurrentPulseWidth for the duty cycle
+                await playTone(audioFreq, handsCurrentPulseWidth / 100); 
+                selectedWaveformType = originalSelectedWaveformType; // Restore original
+
+            } else if (!on && isTactOn && currentActiveSectionId === 'hands') { 
+                isTactOn = false;
+                tactSwitchStatus.textContent = '스위치 상태: 꺼짐 (마우스 클릭 또는 스페이스바 키로 조작)';
+                tactSwitchDemo.classList.remove('bg-red-500', 'hover:bg-red-600');
+                tactSwitchDemo.classList.add('bg-sky-500', 'hover:bg-sky-600');
+                stopTone(); 
+            }
+        }
+
+        tactSwitchDemo.addEventListener('mousedown', (event) => {
+            console.log('Tact switch mousedown event fired.'); 
+            event.preventDefault(); 
+            handleTactSwitch(true);
+        });
+        tactSwitchDemo.addEventListener('mouseup', () => handleTactSwitch(false));
+        tactSwitchDemo.addEventListener('mouseleave', () => {
+            if (isTactOn) handleTactSwitch(false); 
+        });
+
+        tactSwitchDemo.addEventListener('touchstart', (event) => {
+            console.log('Tact switch touchstart event fired.'); 
+            event.preventDefault(); 
+            handleTactSwitch(true);
+        }, { passive: false }); 
+
+        tactSwitchDemo.addEventListener('touchend', () => {
+            console.log('Tact switch touchend event fired.'); 
+            handleTactSwitch(false);
+        });
+        
+        let isSpaceOrEnterPressed = false; 
+        document.addEventListener('keydown', (event) => {
+            if (currentActiveSectionId === 'hands' && (event.key === ' ' || event.key === 'Enter') && !isSpaceOrEnterPressed) {
+                event.preventDefault(); 
+                isSpaceOrEnterPressed = true;
+                handleTactSwitch(true);
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            if (currentActiveSectionId === 'hands' && (event.key === ' ' || event.key === 'Enter') && isSpaceOrEnterPressed) {
+                isSpaceOrEnterPressed = false;
+                handleTactSwitch(false);
+            }
+        });
+
+
+        let synthPitchKnob = document.getElementById('synthPitchKnob');
+        let synthPitchValue = document.getElementById('synthPitchValue');
+        const synthButtons = document.querySelectorAll('.synth-button');
+        let synthOutputStatus = document.getElementById('synthOutputStatus');
+        let synthOutputCanvas; 
+        let synthCtx;    
+
+        const pulseWidthControl = document.getElementById('pulseWidthControl');
+        const pulseWidthKnob = document.getElementById('pulseWidthKnob');
+        const pulseWidthValue = document.getElementById('pulseWidthValue');
+        let currentPulseWidth = 50; 
+        
+        function drawSynthWave(frequency, type, dutyCycle = 50) {
+            if (!synthCtx || !synthOutputCanvas) return; 
+
+            const width = synthOutputCanvas.width;
+            const height = synthOutputCanvas.height;
+            const amplitude = height / 3;
+            const centerY = height / 2;
+            
+            synthCtx.clearRect(0, 0, width, height); 
+            synthCtx.beginPath(); 
+            synthCtx.moveTo(0, centerY); 
+
+            const visualCycles = frequency > 0 ? Math.max(1, frequency / 150) : 2; // 최소 1 사이클, 주파수가 너무 낮으면 2사이클
+            const period = width / visualCycles; 
+            const onWidth = period * (dutyCycle / 100); 
+
+            for (let x = 0; x < width; x++) {
+                let y;
+                const angle = (x / width) * Math.PI * 2 * visualCycles; 
+
+                switch (type) { 
+                    case 'sine':
+                        y = centerY + amplitude * Math.sin(angle);
+                        break;
+                    case 'square':
+                        const phaseInPeriod = (x % period);
+                        if (phaseInPeriod < onWidth) {
+                            y = centerY - amplitude; 
+                        } else {
+                            y = centerY + amplitude; 
+                        }
+                        break;
+                    case 'sawtooth':
+                        y = centerY - amplitude * (angle % (2 * Math.PI) / (2 * Math.PI) * 2 - 1);
+                        break;
+                    case 'triangle':
+                        const phase = angle % (2 * Math.PI);
+                        if (phase < Math.PI) {
+                            y = centerY - amplitude * (1 - (phase / Math.PI) * 2);
+                        } else {
+                            y = centerY - amplitude * (-1 + ((phase - Math.PI) / Math.PI) * 2);
+                        }
+                        break;
+                    default:
+                        y = centerY + amplitude * Math.sin(angle); 
+                }
+                synthCtx.lineTo(x, y);
+            }
+            synthCtx.strokeStyle = 'rgb(16, 185, 129)'; 
+            synthCtx.lineWidth = 2; 
+            synthCtx.stroke(); 
+        }
+
+        function setupSynthCanvas() {
+            synthOutputCanvas = document.getElementById('synthOutputCanvas'); 
+            if (synthOutputCanvas) { 
+                synthCtx = synthOutputCanvas.getContext('2d'); 
+                const container = synthOutputCanvas.parentElement;
+                synthOutputCanvas.width = container.clientWidth;
+                synthOutputCanvas.height = container.clientHeight;
+                drawSynthWave(0, selectedWaveformType, currentPulseWidth); 
+            }
+        }
+    
+        const handsPulseWidthKnob = document.getElementById('handsPulseWidthKnob');
+        const handsPulseWidthValue = document.getElementById('handsPulseWidthValue');
+        let handsPulseWidthCanvas; 
+        let handsPulseWidthCtx;    
+        let handsCurrentPulseWidth = 50;
+        let handsAnimationTime = 0;
+
+        function drawHandsPulseWave(dutyCycle, time) {
+            if (!handsPulseWidthCtx || !handsPulseWidthCanvas) {
+                console.warn('handsPulseWidthCanvas or handsPulseWidthCtx is not initialized in drawHandsPulseWave.');
+                return;
+            }
+
+            const width = handsPulseWidthCanvas.width;
+            const height = handsPulseWidthCanvas.height;
+            const amplitude = height / 3;
+            const centerY = height / 2;
+            const flowSpeed = 0.5;
+            const visualCycles = 2;
+            const totalPixelsPerCycle = width / visualCycles;
+            const onWidth = totalPixelsPerCycle * (dutyCycle / 100);
+            const offset = (time * flowSpeed * totalPixelsPerCycle / (2 * Math.PI)) % totalPixelsPerCycle;
+
+            handsPulseWidthCtx.clearRect(0, 0, width, height);
+            handsPulseWidthCtx.beginPath();
+            const initialAdjustedX = offset % totalPixelsPerCycle;
+            const initialY = (initialAdjustedX < onWidth) ? (centerY - amplitude) : (centerY + amplitude);
+            handsPulseWidthCtx.moveTo(0, initialY);
+
+            for (let x = 1; x <= width; x++) {
+                const adjustedX = (x + offset) % totalPixelsPerCycle;
+                const prevAdjustedX = ((x - 1) + offset) % totalPixelsPerCycle;
+                const currentY = (adjustedX < onWidth) ? (centerY - amplitude) : (centerY + amplitude);
+                const prevY = (prevAdjustedX < onWidth) ? (centerY - amplitude) : (centerY + amplitude);
+                if (currentY !== prevY) {
+                    handsPulseWidthCtx.lineTo(x, prevY);
+                    handsPulseWidthCtx.lineTo(x, currentY);
+                } else {
+                    handsPulseWidthCtx.lineTo(x, currentY);
+                }
+            }
+
+            handsPulseWidthCtx.strokeStyle = 'rgb(124, 58, 237)';
+            handsPulseWidthCtx.lineWidth = 2;
+            handsPulseWidthCtx.stroke();
+        }
+
+        function setupHandsCanvases() {
+            handsPulseWidthCanvas = document.getElementById('handsPulseWidthCanvas');
+            if (handsPulseWidthCanvas) {
+                handsPulseWidthCtx = handsPulseWidthCanvas.getContext('2d');
+                const container = handsPulseWidthCanvas.parentElement;
+                handsPulseWidthCanvas.width = container.clientWidth;
+                handsPulseWidthCanvas.height = container.clientHeight;
+                drawHandsPulseWave(handsCurrentPulseWidth, handsAnimationTime);
+            }
+        }
+
+        function animateHandsWaves() {
+            handsAnimationTime += 0.1;
+            if (handsPulseWidthCtx && handsPulseWidthCanvas) {
+                drawHandsPulseWave(handsCurrentPulseWidth, handsAnimationTime);
+            }
+            window.handsAnimationId = requestAnimationFrame(animateHandsWaves);
+        }
+
+        function startHandsAnimations() {
+            setupHandsCanvases();
+            if (window.handsAnimationId === null) {
+                handsAnimationTime = 0;
+                animateHandsWaves();
+            }
+        }
+
+        function stopHandsAnimations() {
+            if (window.handsAnimationId) {
+                cancelAnimationFrame(window.handsAnimationId);
+                window.handsAnimationId = null;
+            }
+        }
+
+        if (handsPulseWidthKnob) {
+            handsPulseWidthKnob.addEventListener('input', async (event) => {
+                handsCurrentPulseWidth = parseInt(event.target.value);
+                handsPulseWidthValue.textContent = handsCurrentPulseWidth;
+                console.log(`Hands Pulse Width Slider Input: ${handsCurrentPulseWidth}, isTactOn: ${isTactOn}, currentActiveSectionId: ${currentActiveSectionId}`);
+
+                drawHandsPulseWave(handsCurrentPulseWidth, handsAnimationTime);
+
+                if (isTactOn && currentActiveSectionId === 'hands') {
+                    console.log('Tact switch is ON in Hands section. Updating audio with duty cycle:', handsCurrentPulseWidth / 100);
+                    const originalSelectedWaveformType = selectedWaveformType;
+                    selectedWaveformType = 'square';
+                    const potVal = parseInt(potentiometerDemo.value);
+                    const audioFreq = 200 + (potVal / 100) * 1000;
+                    await playTone(audioFreq, handsCurrentPulseWidth / 100);
+                    selectedWaveformType = originalSelectedWaveformType;
+                }
+            });
+        }
+        
+        const noteFrequencies = {
+            'C5': 523.25, 'D5': 587.33, 'E5': 659.25, 'F5': 698.46, 'G5': 783.99, 'A5': 880.00, 'B5': 987.77,
+            'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88
+        };
+
+        synthPitchKnob.addEventListener('input', async (event) => { 
+            const pitch = parseInt(event.target.value);
+            synthPitchValue.textContent = pitch;
+
+            if (oscillator && currentPlayingBaseFreq !== 0) {
+                const pitchMultiplier = 0.5 + (pitch / 100) * 1.5; 
+                const finalFreq = currentPlayingBaseFreq * pitchMultiplier;
+                if (isFinite(finalFreq)) {
+                    await playTone(finalFreq, currentPulseWidth / 100); 
+                } else {
+                    console.error("Invalid finalFreq value:", finalFreq);
+                    stopTone(); 
+                    return;
+                }
+                
+                const activeNoteButton = document.querySelector('.synth-button.ring-4');
+                if (activeNoteButton) {
+                    const noteFull = activeNoteButton.dataset.noteFull; 
+                    const noteName = noteFull.slice(0, -1);
+                    const octave = parseInt(noteFull.slice(-1));
+                    const noteTextMap = { 'C': '도', 'D': '레', 'E': '미', 'F': '파', 'G': '솔', 'A': '라', 'B': '시' };
+                    const displayNote = `${noteTextMap[noteName]}${octave - 3}`; 
+
+                    synthOutputStatus.textContent = `${displayNote} 음 (${selectedWaveformType}파) 재생! (주파수: ${finalFreq.toFixed(2)} Hz)`; 
+                    drawSynthWave(finalFreq, selectedWaveformType, currentPulseWidth); 
+                }
+            }
+        });
+
+        document.querySelectorAll('input[name="waveformType"]').forEach(radio => {
+            radio.addEventListener('change', async (event) => { 
+                selectedWaveformType = event.target.value;
+                console.log(`Waveform changed to: ${selectedWaveformType}`);
+
+
+                if (selectedWaveformType === 'square') {
+                    pulseWidthControl.classList.remove('hidden');
+                } else {
+                    pulseWidthControl.classList.add('hidden');
+                }
+
+                if (oscillator && currentPlayingBaseFreq !== 0) { // 현재 소리가 재생 중이면 파형 즉시 변경
+                    const pitch = parseInt(synthPitchKnob.value);
+                    const finalFreq = currentPlayingBaseFreq * (0.5 + (pitch / 100) * 1.5);
+                    await playTone(finalFreq, currentPulseWidth / 100); 
+                    // 상태 텍스트 및 파형도 업데이트
+                    const activeNoteButton = document.querySelector('.synth-button.ring-4');
+                     if (activeNoteButton) {
+                        const noteFull = activeNoteButton.dataset.noteFull;
+                        const noteName = noteFull.slice(0, -1);
+                        const octave = parseInt(noteFull.slice(-1));
+                        const noteTextMap = { 'C': '도', 'D': '레', 'E': '미', 'F': '파', 'G': '솔', 'A': '라', 'B': '시' };
+                        const displayNote = `${noteTextMap[noteName]}${octave - 3}`;
+                        synthOutputStatus.textContent = `${displayNote} 음 (${selectedWaveformType}파) 재생! (주파수: ${finalFreq.toFixed(2)} Hz)`;
+                        drawSynthWave(finalFreq, selectedWaveformType, currentPulseWidth);
+                    }
+
+                } else { // 소리가 재생 중이 아니면, 시각화만 업데이트
+                    if (currentActiveSectionId === 'play') { 
+                        drawSynthWave(0, selectedWaveformType, currentPulseWidth);
+                    }
+                }
+            });
+        });
+
+        pulseWidthKnob.addEventListener('input', async (event) => { 
+            currentPulseWidth = parseInt(event.target.value);
+            pulseWidthValue.textContent = currentPulseWidth;
+
+            if (oscillator && currentPlayingBaseFreq !== 0) {
+                const pitch = parseInt(synthPitchKnob.value);
+                const finalFreq = currentPlayingBaseFreq * (0.5 + (pitch / 100) * 1.5);
+                drawSynthWave(finalFreq, selectedWaveformType, currentPulseWidth); // 시각화는 항상 업데이트
+                if (selectedWaveformType === 'square') { // 사각파일 때만 오디오 업데이트
+                    await playTone(finalFreq, currentPulseWidth / 100); 
+                }
+            } else {
+                if (selectedWaveformType === 'square' && currentActiveSectionId === 'play') {
+                     drawSynthWave(0, selectedWaveformType, currentPulseWidth); 
+                }
+            }
+        });
+
+        const noteHueMap = { 'C': 0, 'D': 30, 'E': 60, 'F': 120, 'G': 240, 'A': 270, 'B': 300 };
+        const octaveLightness = { '5': 80, '4': 60 };
+        const fixedSaturation = 80; 
+
+        function getNoteGradient(noteFull) {
+            const noteName = noteFull.slice(0, -1); 
+            const octave = noteFull.slice(-1);    
+
+            const hue = noteHueMap[noteName] || 0; 
+            const lightness = octaveLightness[octave] || 70; 
+
+            const startColor = `hsl(${hue}, ${fixedSaturation}%, ${lightness}%)`;
+            const endColor = `hsl(${hue}, ${fixedSaturation}%, ${lightness - 20}%)`; 
+
+            return `linear-gradient(to bottom, ${startColor}, ${endColor})`;
+        }
+
+        synthButtons.forEach(button => {
+            const noteFull = button.dataset.noteFull;
+            button.style.background = getNoteGradient(noteFull);
+
+            button.addEventListener('mousedown', async (event) => { 
+                console.log('Synth button mousedown event fired for:', button.dataset.noteFull); 
+                event.preventDefault(); 
+                const noteFull = button.dataset.noteFull; 
+                const pitch = parseInt(synthPitchKnob.value);
+                
+                let baseFreq = noteFrequencies[noteFull];
+                currentPlayingBaseFreq = baseFreq; 
+
+                const pitchMultiplier = 0.5 + (pitch / 100) * 1.5; 
+                const finalFreq = baseFreq * pitchMultiplier;
+
+                document.querySelectorAll('.synth-button.ring-4').forEach(b => {
+                    b.classList.remove('ring-4', 'ring-blue-500', 'scale-105');
+                });
+                button.classList.add('ring-4', 'ring-blue-500', 'scale-105');
+
+                const noteName = noteFull.slice(0, -1);
+                const octave = parseInt(noteFull.slice(-1));
+                const noteTextMap = { 'C': '도', 'D': '레', 'E': '미', 'F': '파', 'G': '솔', 'A': '라', 'B': '시' };
+                const displayNote = `${noteTextMap[noteName]}${octave - 3}`; 
+
+                synthOutputStatus.textContent = `${displayNote} 음 (${selectedWaveformType}파) 재생! (주파수: ${finalFreq.toFixed(2)} Hz)`; 
+                drawSynthWave(finalFreq, selectedWaveformType, currentPulseWidth); 
+                await playTone(finalFreq, currentPulseWidth / 100); 
+            });
+
+            button.addEventListener('mouseup', () => {
+                console.log('Synth button mouseup event fired for:', button.dataset.noteFull); 
+                stopTone();
+                button.classList.remove('ring-4', 'ring-blue-500', 'scale-105');
+                synthOutputStatus.textContent = '버튼을 눌러 연주해보세요!';
+                drawSynthWave(0, selectedWaveformType, currentPulseWidth); 
+                currentPlayingBaseFreq = 0; 
+            });
+
+            button.addEventListener('mouseleave', () => {
+                 console.log('Synth button mouseleave event fired.'); 
+                 if (button.classList.contains('ring-4')) {
+                    stopTone();
+                    button.classList.remove('ring-4', 'ring-blue-500', 'scale-105');
+                    synthOutputStatus.textContent = '버튼을 눌러 연주해보세요!';
+                    drawSynthWave(0, selectedWaveformType, currentPulseWidth); 
+                    currentPlayingBaseFreq = 0;
+                 }
+            });
+
+            button.addEventListener('touchstart', async (event) => { 
+                console.log('Synth button touchstart event fired for:', button.dataset.noteFull); 
+                event.preventDefault(); 
+                const noteFull = button.dataset.noteFull;
+                const pitch = parseInt(synthPitchKnob.value);
+
+                let baseFreq = noteFrequencies[noteFull];
+                currentPlayingBaseFreq = baseFreq;
+
+                const pitchMultiplier = 0.5 + (pitch / 100) * 1.5;
+                const finalFreq = baseFreq * pitchMultiplier;
+
+                document.querySelectorAll('.synth-button.ring-4').forEach(b => {
+                    b.classList.remove('ring-4', 'ring-blue-500', 'scale-105');
+                });
+                button.classList.add('ring-4', 'ring-blue-500', 'scale-105');
+
+                const noteName = noteFull.slice(0, -1);
+                const octave = parseInt(noteFull.slice(-1));
+                const noteTextMap = { 'C': '도', 'D': '레', 'E': '미', 'F': '파', 'G': '솔', 'A': '라', 'B': '시' };
+                const displayNote = `${noteTextMap[noteName]}${octave - 3}`;
+                synthOutputStatus.textContent = `${displayNote} 음 (${selectedWaveformType}파) 재생! (주파수: ${finalFreq.toFixed(2)} Hz)`;
+                drawSynthWave(finalFreq, selectedWaveformType, currentPulseWidth);
+                await playTone(finalFreq, currentPulseWidth / 100);
+            }, { passive: false });
+
+            button.addEventListener('touchend', () => {
+                console.log('Synth button touchend event fired.');
+                stopTone();
+                button.classList.remove('ring-4', 'ring-blue-500', 'scale-105');
+                synthOutputStatus.textContent = '버튼을 눌러 연주해보세요!';
+                drawSynthWave(0, selectedWaveformType, currentPulseWidth);
+                currentPlayingBaseFreq = 0;
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const sineRadioPlay = document.querySelector('#play input[name="waveformType"][value="sine"]');
+            const pulseWidthControlUI = document.getElementById('pulseWidthControl');
+            if (sineRadioPlay && sineRadioPlay.checked) { // play 섹션의 사인파가 기본 체크되어 있다면
+                 if(pulseWidthControlUI) pulseWidthControlUI.classList.add('hidden');
+            }
+
+
+            showSection(currentActiveSectionId); 
+        });
+
+        window.addEventListener('resize', () => {
+            if (currentActiveSectionId === 'sound') {
+                setupWaveCanvas();
+                drawWave(parseInt(frequencySlider.value));
+            } else if (currentActiveSectionId === 'heart') {
+                setupHeartCanvases();
+            } else if (currentActiveSectionId === 'hands') {
+                setupHandsCanvases(); // Ensure setup is called on resize
+                drawHandsPulseWave(handsCurrentPulseWidth, handsAnimationTime); 
+            } else if (currentActiveSectionId === 'play') {
+                setupSynthCanvas();
+                const activeNoteButton = document.querySelector('.synth-button.ring-4');
+                let freqToDraw = 0;
+                if (activeNoteButton && currentPlayingBaseFreq !== 0) {
+                    const pitch = parseInt(synthPitchKnob.value);
+                    freqToDraw = currentPlayingBaseFreq * (0.5 + (pitch / 100) * 1.5);
+                }
+                drawSynthWave(freqToDraw, selectedWaveformType, currentPulseWidth);
+            } 
+            // 'summary' 섹션에 대한 resize 핸들링은 iframe이 자체적으로 반응형을 처리하므로 제거
+        });
+
+    // --- 기존 슬라이드 기능 관련 JavaScript 제거 또는 주석 처리 ---
+    // 기존 슬라이드 기능 관련 변수들은 사용되지 않으므로 제거합니다.
+    // let currentSlide = 0;
+    // const slidesContainer = document.getElementById('circuit-slides');
+    // const slidePages = slidesContainer ? slidesContainer.querySelectorAll('.slide-page') : [];
+    // const totalSlides = slidePages.length;
+    // const prevButton = document.getElementById('prevSlide');
+    // const nextButton = document.getElementById('nextSlide');
+    // const slideIndicatorsContainer = document.getElementById('slideIndicators');
+
+    // // 기존 슬라이드 제어 함수들은 사용되지 않으므로 제거합니다.
+    // function showSlide(index) { /* ... */ }
+    // function nextSlide() { /* ... */ }
+    // function prevSlide() { /* ... */ }
+    // function createIndicators() { /* ... */ }
+    // function updateIndicators() { /* ... */ }
+
+    // setupSlides 함수는 이제 필요 없으므로 제거합니다.
+    // function setupSlides() {
+    //     if (slidesContainer) {
+    //         showSlide(currentSlide);
+    //         createIndicators();
+    //     }
+    // }
+
+    // 슬라이드 네비게이션 버튼 이벤트 리스너도 제거합니다.
+    // if (prevButton) { prevButton.addEventListener('click', prevSlide); }
+    // if (nextButton) { nextButton.addEventListener('click', nextSlide); }
+
+    // DOMContentLoaded에서 setupSlides 호출도 제거합니다.
+    // document.addEventListener('DOMContentLoaded', setupSlides);
+
+    </script>
+</body>
+</html>
